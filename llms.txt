@@ -1,0 +1,65 @@
+# ios_spring_menu_button
+
+> A self-contained Flutter widget: a "..." button that pops a springy,
+> frosted-glass context menu, matching iOS UIKit's `UIMenu` /
+> SwiftUI's `.contextMenu`. No dependencies beyond the Flutter SDK.
+
+## Install
+
+```yaml
+dependencies:
+  ios_spring_menu_button: ^0.1.0
+```
+
+```dart
+import 'package:ios_spring_menu_button/ios_spring_menu_button.dart';
+```
+
+## Public API
+
+- `IosSpringMenuButton({ actions, controller, style, icon, iconSize, iconColor, semanticLabel })`
+  — the button. Give it a list of `IosMenuAction`s. Drop it into `AppBar.actions`
+  (its natural home, top-right, matching native iOS placement) or anywhere else.
+- `IosMenuAction({ label, icon, onTap, isDestructive })` — one menu row.
+  Set `isDestructive: true` for actions like "Delete" (renders in `IosSpringMenuStyle.destructiveColor`).
+- `IosSpringMenuStyle({ buttonSpring, menuPopSpring, closeDuration, closeCurve, menuWidth, cornerRadius, blurSigma, lightFillColor, darkFillColor, destructiveColor })`
+  — visual/physics tuning. Use `IosSpringMenuStyle.defaults.copyWith(...)` to
+  override only what you need.
+- `IosSpringMenuController()` — optional imperative handle: `.open()`, `.close()`,
+  `.toggle()`, `.isOpen`. Pass it to `IosSpringMenuButton.controller` if you
+  need to drive the menu from outside the button itself.
+
+## Minimal example
+
+```dart
+IosSpringMenuButton(
+  actions: [
+    IosMenuAction(label: 'Rename', icon: CupertinoIcons.pencil, onTap: rename),
+    IosMenuAction(label: 'Delete', icon: CupertinoIcons.trash, isDestructive: true, onTap: delete),
+  ],
+)
+```
+
+## Behavior notes (don't reimplement, already handled)
+
+- The button already animates press/release (shrink, directional lean toward
+  touch point, release bounce) and a resting circular border/fill — don't
+  wrap it in another `GestureDetector` or add your own press animation.
+- Menu-item taps already dismiss the menu before firing `onTap` (via
+  `dismiss(andThen: action.onTap)` internally) — your `onTap` runs after the
+  menu is fully closed, so it's safe to push a screen, show a dialog, or open
+  another sheet from it without an animation collision.
+- Dark mode is handled automatically via `Theme.of(context).brightness` —
+  no separate dark-mode API to configure.
+- Accessibility labels are already wired (`semanticLabel` on the button,
+  `IosMenuAction.label` on each row) — no extra `Semantics` wrapping needed.
+
+## Known limitation
+
+- No drag-through selection (press, drag across items, release to pick) —
+  only independent per-row taps are supported today.
+
+## Full docs
+
+See `README.md` for feature list and `example/lib/main.dart` for a complete
+runnable app.

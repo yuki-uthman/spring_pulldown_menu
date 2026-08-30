@@ -1,0 +1,24 @@
+name: ios_spring_menu_button
+description: >-
+  A springy, iOS/UIKit-style "..." context menu button for Flutter — a
+  frosted-glass popup menu with spring pop-in, directional press-lean,
+  release bounce, and native-feel dismiss behavior.
+version: 0.1.0
+homepage: https://github.com/YOUR_GITHUB_USERNAME/ios_spring_menu_button
+repository: https://github.com/YOUR_GITHUB_USERNAME/ios_spring_menu_button
+issue_tracker: https://github.com/YOUR_GITHUB_USERNAME/ios_spring_menu_button/issues
+
+environment:
+  sdk: ^3.4.0
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
