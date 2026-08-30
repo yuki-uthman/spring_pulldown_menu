@@ -1,41 +1,41 @@
-# ios_spring_menu_button
+# spring_pulldown_menu
 
 > A self-contained Flutter widget: a "..." button that pops a springy,
-> frosted-glass context menu, matching iOS UIKit's `UIMenu` /
-> SwiftUI's `.contextMenu`. No dependencies beyond the Flutter SDK.
+> frosted-glass pull-down menu, matching iOS UIKit's `UIMenu` /
+> SwiftUI's `Menu`. No dependencies beyond the Flutter SDK.
 
 ## Install
 
 ```yaml
 dependencies:
-  ios_spring_menu_button: ^0.1.0
+  spring_pulldown_menu: ^0.1.0
 ```
 
 ```dart
-import 'package:ios_spring_menu_button/ios_spring_menu_button.dart';
+import 'package:spring_pulldown_menu/spring_pulldown_menu.dart';
 ```
 
 ## Public API
 
-- `IosSpringMenuButton({ actions, controller, style, icon, iconSize, iconColor, semanticLabel })`
-  — the button. Give it a list of `IosMenuAction`s. Drop it into `AppBar.actions`
+- `SpringPulldownMenuButton({ actions, controller, style, icon, iconSize, iconColor, semanticLabel })`
+  — the button. Give it a list of `SpringPulldownMenuAction`s. Drop it into `AppBar.actions`
   (its natural home, top-right, matching native iOS placement) or anywhere else.
-- `IosMenuAction({ label, icon, onTap, isDestructive })` — one menu row.
-  Set `isDestructive: true` for actions like "Delete" (renders in `IosSpringMenuStyle.destructiveColor`).
-- `IosSpringMenuStyle({ buttonSpring, menuPopSpring, closeDuration, closeCurve, menuWidth, cornerRadius, blurSigma, lightFillColor, darkFillColor, destructiveColor })`
-  — visual/physics tuning. Use `IosSpringMenuStyle.defaults.copyWith(...)` to
+- `SpringPulldownMenuAction({ label, icon, onTap, isDestructive })` — one menu row.
+  Set `isDestructive: true` for actions like "Delete" (renders in `SpringPulldownMenuStyle.destructiveColor`).
+- `SpringPulldownMenuStyle({ buttonSpring, menuPopSpring, closeDuration, closeCurve, menuWidth, cornerRadius, blurSigma, lightFillColor, darkFillColor, destructiveColor, enableHaptics })`
+  — visual/physics tuning. Use `SpringPulldownMenuStyle.defaults.copyWith(...)` to
   override only what you need.
-- `IosSpringMenuController()` — optional imperative handle: `.open()`, `.close()`,
-  `.toggle()`, `.isOpen`. Pass it to `IosSpringMenuButton.controller` if you
+- `SpringPulldownMenuController()` — optional imperative handle: `.open()`, `.close()`,
+  `.toggle()`, `.isOpen`. Pass it to `SpringPulldownMenuButton.controller` if you
   need to drive the menu from outside the button itself.
 
 ## Minimal example
 
 ```dart
-IosSpringMenuButton(
+SpringPulldownMenuButton(
   actions: [
-    IosMenuAction(label: 'Rename', icon: CupertinoIcons.pencil, onTap: rename),
-    IosMenuAction(label: 'Delete', icon: CupertinoIcons.trash, isDestructive: true, onTap: delete),
+    SpringPulldownMenuAction(label: 'Rename', icon: CupertinoIcons.pencil, onTap: rename),
+    SpringPulldownMenuAction(label: 'Delete', icon: CupertinoIcons.trash, isDestructive: true, onTap: delete),
   ],
 )
 ```
@@ -52,7 +52,10 @@ IosSpringMenuButton(
 - Dark mode is handled automatically via `Theme.of(context).brightness` —
   no separate dark-mode API to configure.
 - Accessibility labels are already wired (`semanticLabel` on the button,
-  `IosMenuAction.label` on each row) — no extra `Semantics` wrapping needed.
+  `SpringPulldownMenuAction.label` on each row) — no extra `Semantics` wrapping needed.
+- Menu row taps already fire `HapticFeedback.selectionClick()` — don't add your
+  own haptic call in `onTap`. Set `SpringPulldownMenuStyle.enableHaptics: false`
+  to disable it instead.
 
 ## Known limitation
 

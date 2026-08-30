@@ -1,5 +1,5 @@
-name: ios_spring_menu_button_example
-description: Example app for the ios_spring_menu_button package.
+name: spring_pulldown_menu_example
+description: Example app for the spring_pulldown_menu package.
 publish_to: "none"
 version: 0.1.0
 
@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  ios_spring_menu_button:
+  spring_pulldown_menu:
     path: ../
 
 dev_dependencies:

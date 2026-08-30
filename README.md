@@ -1,8 +1,8 @@
-# ios_spring_menu_button
+# spring_pulldown_menu
 
 A self-contained, drop-in "..." button for Flutter with a springy,
-frosted-glass context menu popover — matching the pop-and-overshoot feel of
-UIKit's `UIMenu` / SwiftUI's `.contextMenu`.
+frosted-glass pull-down menu popover — matching the pop-and-overshoot feel of
+UIKit's `UIMenu` / SwiftUI's `Menu`.
 
 No dependencies beyond the Flutter SDK.
 
@@ -20,26 +20,28 @@ No dependencies beyond the Flutter SDK.
   toolbar buttons — that deepens further on press
 - Native-style solid selection flash on the tapped menu row (distinct from
   the ripple)
+- A light haptic tick on menu row selection (`HapticFeedback.selectionClick`),
+  matching real iOS — toggle off via `SpringPulldownMenuStyle.enableHaptics`
 - VoiceOver / TalkBack labels on the button and every menu row
 - Dark mode support
-- An imperative `IosSpringMenuController` for opening/closing the menu from
+- An imperative `SpringPulldownMenuController` for opening/closing the menu from
   outside the button (e.g. a keyboard shortcut, another gesture)
 
 ## Usage
 
 ```dart
-import 'package:ios_spring_menu_button/ios_spring_menu_button.dart';
+import 'package:spring_pulldown_menu/spring_pulldown_menu.dart';
 
 AppBar(
   actions: [
-    IosSpringMenuButton(
+    SpringPulldownMenuButton(
       actions: [
-        IosMenuAction(
+        SpringPulldownMenuAction(
           label: 'Rename',
           icon: CupertinoIcons.pencil,
           onTap: rename,
         ),
-        IosMenuAction(
+        SpringPulldownMenuAction(
           label: 'Delete',
           icon: CupertinoIcons.trash,
           isDestructive: true,
@@ -54,9 +56,9 @@ AppBar(
 Controlling the menu programmatically:
 
 ```dart
-final menuController = IosSpringMenuController();
+final menuController = SpringPulldownMenuController();
 
-IosSpringMenuButton(
+SpringPulldownMenuButton(
   controller: menuController,
   actions: [...],
 )
@@ -67,11 +69,11 @@ menuController.close();
 menuController.toggle();
 ```
 
-Custom styling (springs, timing, colors, size) via `IosSpringMenuStyle`:
+Custom styling (springs, timing, colors, size) via `SpringPulldownMenuStyle`:
 
 ```dart
-IosSpringMenuButton(
-  style: IosSpringMenuStyle.defaults.copyWith(
+SpringPulldownMenuButton(
+  style: SpringPulldownMenuStyle.defaults.copyWith(
     menuWidth: 280,
     cornerRadius: 20,
   ),

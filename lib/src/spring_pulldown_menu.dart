@@ -3,23 +3,24 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart' show CupertinoIcons, CupertinoColors;
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 
 /// -----------------------------------------------------------------------
-/// IosSpringMenuButton — a self-contained, drop-in "..." button with a
-/// springy iOS/UIKit-style context menu popover.
+/// SpringPulldownMenuButton — a self-contained, drop-in "..." button with a
+/// springy iOS/UIKit-style pull-down menu popover.
 ///
 /// This whole file has no dependencies beyond the Flutter SDK — nothing else
 /// from this package is required to use it.
 ///
 /// ```dart
-/// final menuController = IosSpringMenuController();
+/// final menuController = SpringPulldownMenuController();
 ///
-/// IosSpringMenuButton(
+/// SpringPulldownMenuButton(
 ///   controller: menuController, // optional — omit it if you don't need
 ///                               // to open/close the menu programmatically
 ///   actions: [
-///     IosMenuAction(label: 'Rename', icon: CupertinoIcons.pencil, onTap: rename),
-///     IosMenuAction(label: 'Delete', icon: CupertinoIcons.trash, isDestructive: true, onTap: delete),
+///     SpringPulldownMenuAction(label: 'Rename', icon: CupertinoIcons.pencil, onTap: rename),
+///     SpringPulldownMenuAction(label: 'Delete', icon: CupertinoIcons.trash, isDestructive: true, onTap: delete),
 ///   ],
 /// )
 ///
@@ -30,15 +31,15 @@ import 'package:flutter/physics.dart';
 /// -----------------------------------------------------------------------
 
 /// A single row in the popup menu.
-class IosMenuAction {
+class SpringPulldownMenuAction {
   final String label;
   final IconData icon;
   final VoidCallback? onTap;
 
-  /// Renders the row in [IosSpringMenuStyle.destructiveColor] (e.g. "Delete").
+  /// Renders the row in [SpringPulldownMenuStyle.destructiveColor] (e.g. "Delete").
   final bool isDestructive;
 
-  const IosMenuAction({
+  const SpringPulldownMenuAction({
     required this.label,
     required this.icon,
     this.onTap,
@@ -46,11 +47,11 @@ class IosMenuAction {
   });
 }
 
-/// Visual + physics configuration for [IosSpringMenuButton] — the same role
+/// Visual + physics configuration for [SpringPulldownMenuButton] — the same role
 /// [ThemeData]/`CardTheme` play for built-in Material widgets. Override only
 /// the fields you care about via [copyWith]; everything else falls back to
 /// HIG-matched defaults.
-class IosSpringMenuStyle {
+class SpringPulldownMenuStyle {
   /// Spring driving the button's own press/release recoil.
   final SpringDescription buttonSpring;
 
@@ -73,7 +74,12 @@ class IosSpringMenuStyle {
 
   final Color destructiveColor;
 
-  const IosSpringMenuStyle({
+  /// Whether tapping a menu row fires a light [HapticFeedback.selectionClick]
+  /// — matching real iOS pull-down/context menus. Set false if your app
+  /// manages its own haptics policy (or for tests).
+  final bool enableHaptics;
+
+  const SpringPulldownMenuStyle({
     this.buttonSpring = const SpringDescription(
       mass: 1,
       stiffness: 300,
@@ -92,11 +98,12 @@ class IosSpringMenuStyle {
     this.lightFillColor,
     this.darkFillColor,
     this.destructiveColor = CupertinoColors.destructiveRed,
+    this.enableHaptics = true,
   });
 
-  static const defaults = IosSpringMenuStyle();
+  static const defaults = SpringPulldownMenuStyle();
 
-  IosSpringMenuStyle copyWith({
+  SpringPulldownMenuStyle copyWith({
     SpringDescription? buttonSpring,
     SpringDescription? menuPopSpring,
     Duration? closeDuration,
@@ -107,8 +114,9 @@ class IosSpringMenuStyle {
     Color? lightFillColor,
     Color? darkFillColor,
     Color? destructiveColor,
+    bool? enableHaptics,
   }) {
-    return IosSpringMenuStyle(
+    return SpringPulldownMenuStyle(
       buttonSpring: buttonSpring ?? this.buttonSpring,
       menuPopSpring: menuPopSpring ?? this.menuPopSpring,
       closeDuration: closeDuration ?? this.closeDuration,
@@ -119,19 +127,20 @@ class IosSpringMenuStyle {
       lightFillColor: lightFillColor ?? this.lightFillColor,
       darkFillColor: darkFillColor ?? this.darkFillColor,
       destructiveColor: destructiveColor ?? this.destructiveColor,
+      enableHaptics: enableHaptics ?? this.enableHaptics,
     );
   }
 }
 
-/// Imperative handle for an [IosSpringMenuButton] — attach one to open,
+/// Imperative handle for a [SpringPulldownMenuButton] — attach one to open,
 /// close, or query the menu from outside the widget that owns the button,
 /// the same way you'd drive a [TextEditingController] or [AnimationController].
 ///
 /// Optional: if you never need to control the menu programmatically (only
-/// via the button's own tap), leave [IosSpringMenuButton.controller] unset —
+/// via the button's own tap), leave [SpringPulldownMenuButton.controller] unset —
 /// the button manages its own internally.
-class IosSpringMenuController {
-  _IosSpringMenuButtonState? _state;
+class SpringPulldownMenuController {
+  _SpringPulldownMenuButtonState? _state;
 
   bool get isOpen => _state?._menuOpen ?? false;
 
@@ -139,20 +148,20 @@ class IosSpringMenuController {
   void close() => _state?._closeMenu();
   void toggle() => _state?._toggleMenu();
 
-  void _attach(_IosSpringMenuButtonState state) => _state = state;
-  void _detach(_IosSpringMenuButtonState state) {
+  void _attach(_SpringPulldownMenuButtonState state) => _state = state;
+  void _detach(_SpringPulldownMenuButtonState state) {
     if (_state == state) _state = null;
   }
 }
 
 /// A self-contained iOS-style "..." button that pops open a springy,
-/// frosted-glass context menu anchored to the button's own screen position —
+/// frosted-glass pull-down menu anchored to the button's own screen position —
 /// matching the pop-and-overshoot feel of UIKit's `UIMenu` / SwiftUI's
-/// `.contextMenu`.
-class IosSpringMenuButton extends StatefulWidget {
-  final List<IosMenuAction> actions;
-  final IosSpringMenuController? controller;
-  final IosSpringMenuStyle style;
+/// `Menu`.
+class SpringPulldownMenuButton extends StatefulWidget {
+  final List<SpringPulldownMenuAction> actions;
+  final SpringPulldownMenuController? controller;
+  final SpringPulldownMenuStyle style;
   final IconData icon;
   final double iconSize;
   final Color? iconColor;
@@ -161,11 +170,11 @@ class IosSpringMenuButton extends StatefulWidget {
   /// so without this a screen reader has nothing to say for it.
   final String semanticLabel;
 
-  const IosSpringMenuButton({
+  const SpringPulldownMenuButton({
     super.key,
     required this.actions,
     this.controller,
-    this.style = IosSpringMenuStyle.defaults,
+    this.style = SpringPulldownMenuStyle.defaults,
     this.icon = CupertinoIcons.ellipsis,
     this.iconSize = 22,
     this.iconColor,
@@ -173,10 +182,10 @@ class IosSpringMenuButton extends StatefulWidget {
   });
 
   @override
-  State<IosSpringMenuButton> createState() => _IosSpringMenuButtonState();
+  State<SpringPulldownMenuButton> createState() => _SpringPulldownMenuButtonState();
 }
 
-class _IosSpringMenuButtonState extends State<IosSpringMenuButton>
+class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
     with TickerProviderStateMixin {
   late final AnimationController _scaleController;
 
@@ -188,7 +197,7 @@ class _IosSpringMenuButtonState extends State<IosSpringMenuButton>
   final GlobalKey _buttonKey = GlobalKey();
   final GlobalKey<_SpringMenuOverlayState> _menuKey = GlobalKey();
 
-  IosSpringMenuController? _internalController;
+  SpringPulldownMenuController? _internalController;
   OverlayEntry? _overlayEntry;
   bool _menuOpen = false;
 
@@ -198,8 +207,8 @@ class _IosSpringMenuButtonState extends State<IosSpringMenuButton>
   /// way they were pushed, then rebound past center before settling.
   Offset _pressDirection = Offset.zero;
 
-  IosSpringMenuController get _effectiveController =>
-      widget.controller ?? (_internalController ??= IosSpringMenuController());
+  SpringPulldownMenuController get _effectiveController =>
+      widget.controller ?? (_internalController ??= SpringPulldownMenuController());
 
   @override
   void initState() {
@@ -221,7 +230,7 @@ class _IosSpringMenuButtonState extends State<IosSpringMenuButton>
   }
 
   @override
-  void didUpdateWidget(covariant IosSpringMenuButton oldWidget) {
+  void didUpdateWidget(covariant SpringPulldownMenuButton oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
       (oldWidget.controller ?? _internalController)?._detach(this);
@@ -468,12 +477,12 @@ class _IosSpringMenuButtonState extends State<IosSpringMenuButton>
 
 /// The overlay: a tap-to-dismiss blurred barrier plus the floating menu card,
 /// both driven by one spring-simulated controller. Internal implementation
-/// detail — external code drives everything through [IosSpringMenuController].
+/// detail — external code drives everything through [SpringPulldownMenuController].
 class _SpringMenuOverlay extends StatefulWidget {
   final Offset anchor;
   final Size anchorSize;
-  final List<IosMenuAction> actions;
-  final IosSpringMenuStyle style;
+  final List<SpringPulldownMenuAction> actions;
+  final SpringPulldownMenuStyle style;
 
   /// Called once, right as a dismiss not triggered by the button itself
   /// begins (tap-outside, picking an action) — lets the button play its own
@@ -554,7 +563,7 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
     final style = widget.style;
 
     // Anchor the card so it hangs below the button, right-edge aligned with
-    // it (matching where a native iOS context menu opens from a top-right
+    // it (matching where a native iOS pull-down menu opens from a top-right
     // "..." button), clamped to stay fully on-screen.
     final estimatedHeight = widget.actions.length * 48.0 + 16;
 
@@ -678,10 +687,10 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
 
 /// The rounded, frosted-glass menu surface itself.
 class _MenuCard extends StatelessWidget {
-  final List<IosMenuAction> actions;
-  final IosSpringMenuStyle style;
+  final List<SpringPulldownMenuAction> actions;
+  final SpringPulldownMenuStyle style;
   final bool isDark;
-  final ValueChanged<IosMenuAction> onSelect;
+  final ValueChanged<SpringPulldownMenuAction> onSelect;
 
   const _MenuCard({
     required this.actions,
@@ -738,6 +747,7 @@ class _MenuCard extends StatelessWidget {
                   labelColor: actions[i].isDestructive
                       ? style.destructiveColor
                       : labelColor,
+                  enableHaptics: style.enableHaptics,
                   onTap: () => onSelect(actions[i]),
                 ),
               ],
@@ -750,13 +760,15 @@ class _MenuCard extends StatelessWidget {
 }
 
 class _MenuRow extends StatefulWidget {
-  final IosMenuAction action;
+  final SpringPulldownMenuAction action;
   final Color labelColor;
+  final bool enableHaptics;
   final VoidCallback onTap;
 
   const _MenuRow({
     required this.action,
     required this.labelColor,
+    required this.enableHaptics,
     required this.onTap,
   });
 
@@ -767,12 +779,13 @@ class _MenuRow extends StatefulWidget {
 class _MenuRowState extends State<_MenuRow> {
   // Set once and never reset: the menu (and this row with it) is gone within
   // one dismiss animation of a tap landing, so there's no "un-highlight" to
-  // animate back to — real UIKit context menus flash the tapped row solid
+  // animate back to — real UIKit pull-down menus flash the tapped row solid
   // for exactly that window before closing, distinct from InkWell's own
   // brief, fading tap ripple.
   bool _selected = false;
 
   void _handleTap() {
+    if (widget.enableHaptics) HapticFeedback.selectionClick();
     setState(() => _selected = true);
     widget.onTap();
   }

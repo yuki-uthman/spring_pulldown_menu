@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:ios_spring_menu_button/ios_spring_menu_button.dart';
+import 'package:spring_pulldown_menu/spring_pulldown_menu.dart';
 
 void main() {
   runApp(const ExampleApp());
@@ -27,7 +27,7 @@ class _ExampleAppState extends State<ExampleApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'IosSpringMenuButton Example',
+      title: 'SpringPulldownMenuButton Example',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -67,24 +67,24 @@ class TodayScreen extends StatelessWidget {
               icon: Icon(isDarkMode ? CupertinoIcons.sun_max : CupertinoIcons.moon),
               tooltip: isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
             ),
-          IosSpringMenuButton(
+          SpringPulldownMenuButton(
             actions: [
-              IosMenuAction(
+              SpringPulldownMenuAction(
                 label: 'Mark all complete',
                 icon: CupertinoIcons.checkmark_alt,
                 onTap: () {},
               ),
-              IosMenuAction(
+              SpringPulldownMenuAction(
                 label: 'Reminders',
                 icon: CupertinoIcons.bell,
                 onTap: () {},
               ),
-              IosMenuAction(
+              SpringPulldownMenuAction(
                 label: 'Edit list',
                 icon: CupertinoIcons.pencil,
                 onTap: () {},
               ),
-              IosMenuAction(
+              SpringPulldownMenuAction(
                 label: 'Delete',
                 icon: CupertinoIcons.trash,
                 isDestructive: true,

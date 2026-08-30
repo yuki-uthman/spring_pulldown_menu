@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ios_spring_menu_button/ios_spring_menu_button.dart';
+import 'package:spring_pulldown_menu/spring_pulldown_menu.dart';
 
 void main() {
   Widget wrap(Widget child) {
@@ -15,9 +15,9 @@ void main() {
 
     await tester.pumpWidget(
       wrap(
-        IosSpringMenuButton(
+        SpringPulldownMenuButton(
           actions: [
-            IosMenuAction(
+            SpringPulldownMenuAction(
               label: 'Rename',
               icon: CupertinoIcons.pencil,
               onTap: () => renamed = true,
@@ -29,7 +29,7 @@ void main() {
 
     expect(find.text('Rename'), findsNothing);
 
-    await tester.tap(find.byType(IosSpringMenuButton));
+    await tester.tap(find.byType(SpringPulldownMenuButton));
     await tester.pumpAndSettle();
 
     expect(find.text('Rename'), findsOneWidget);
@@ -44,14 +44,14 @@ void main() {
   testWidgets('controller opens and closes the menu programmatically', (
     tester,
   ) async {
-    final controller = IosSpringMenuController();
+    final controller = SpringPulldownMenuController();
 
     await tester.pumpWidget(
       wrap(
-        IosSpringMenuButton(
+        SpringPulldownMenuButton(
           controller: controller,
           actions: const [
-            IosMenuAction(label: 'Delete', icon: CupertinoIcons.trash),
+            SpringPulldownMenuAction(label: 'Delete', icon: CupertinoIcons.trash),
           ],
         ),
       ),
