@@ -4,9 +4,9 @@ description: >-
   frosted-glass popup menu with spring pop-in, directional press-lean,
   release bounce, and native-feel dismiss behavior.
 version: 0.1.0
-homepage: https://github.com/YOUR_GITHUB_USERNAME/ios_spring_menu_button
-repository: https://github.com/YOUR_GITHUB_USERNAME/ios_spring_menu_button
-issue_tracker: https://github.com/YOUR_GITHUB_USERNAME/ios_spring_menu_button/issues
+homepage: https://github.com/yuki-uthman/ios_spring_menu_button
+repository: https://github.com/yuki-uthman/ios_spring_menu_button
+issue_tracker: https://github.com/yuki-uthman/ios_spring_menu_button/issues
 
 environment:
   sdk: ^3.4.0
