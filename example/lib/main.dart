@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:spring_pulldown_menu/spring_pulldown_menu.dart';
@@ -67,11 +69,29 @@ class PlaygroundScreen extends StatefulWidget {
 class _PlaygroundScreenState extends State<PlaygroundScreen> {
   static const _defaults = SpringPulldownMenuStyle();
 
+  // buttonDampingRatio/menuDampingRatio default to null ("use buttonSpring's
+  // own damping as given") — there's no single numeric "default" to show on
+  // a slider, so these sliders start at whatever ratio the default springs
+  // already imply (damping / (2 * sqrt(mass * stiffness))), computed once
+  // below, so "Default" visually means "the built-in feel," not an
+  // arbitrary number.
+  static double _impliedDampingRatio(SpringDescription spring) =>
+      spring.damping / (2 * math.sqrt(spring.mass * spring.stiffness));
+
+  static final double _defaultButtonDampingRatio = _impliedDampingRatio(
+    _defaults.buttonSpring,
+  );
+  static final double _defaultMenuDampingRatio = _impliedDampingRatio(
+    _defaults.menuPopSpring,
+  );
+
   double _buttonPressScale = _defaults.buttonPressScale;
   double _buttonBounceScale = _defaults.buttonBounceScale;
   double _buttonImpactBounceIntensity = _defaults.buttonImpactBounceIntensity;
   double _buttonLeanDistance = _defaults.buttonLeanDistance;
   double _menuBounceScale = _defaults.menuBounceScale;
+  late double _buttonDampingRatio = _defaultButtonDampingRatio;
+  late double _menuDampingRatio = _defaultMenuDampingRatio;
 
   void _reset() {
     setState(() {
@@ -80,6 +100,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       _buttonImpactBounceIntensity = _defaults.buttonImpactBounceIntensity;
       _buttonLeanDistance = _defaults.buttonLeanDistance;
       _menuBounceScale = _defaults.menuBounceScale;
+      _buttonDampingRatio = _defaultButtonDampingRatio;
+      _menuDampingRatio = _defaultMenuDampingRatio;
     });
   }
 
@@ -91,6 +113,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       buttonImpactBounceIntensity: _buttonImpactBounceIntensity,
       buttonLeanDistance: _buttonLeanDistance,
       menuBounceScale: _menuBounceScale,
+      buttonDampingRatio: _buttonDampingRatio,
+      menuDampingRatio: _menuDampingRatio,
     );
 
     return Scaffold(
@@ -196,6 +220,27 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             max: 1.6,
             defaultValue: _defaults.menuBounceScale,
             onChanged: (v) => setState(() => _menuBounceScale = v),
+          ),
+          _Knob(
+            label: 'buttonDampingRatio',
+            subtitle: 'How many times the button oscillates before holding '
+                'still — independent of the peak above. Low = bounces '
+                'several times; 1.0 = pops and holds with no bounce; high '
+                '= settles slowly with no bounce either.',
+            value: _buttonDampingRatio,
+            min: 0.05,
+            max: 1.5,
+            defaultValue: _defaultButtonDampingRatio,
+            onChanged: (v) => setState(() => _buttonDampingRatio = v),
+          ),
+          _Knob(
+            label: 'menuDampingRatio',
+            subtitle: "Same idea, for the floating menu's own pop-in.",
+            value: _menuDampingRatio,
+            min: 0.05,
+            max: 1.5,
+            defaultValue: _defaultMenuDampingRatio,
+            onChanged: (v) => setState(() => _menuDampingRatio = v),
           ),
           const SizedBox(height: 12),
           Center(

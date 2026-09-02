@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -327,4 +329,77 @@ void main() {
   // data plumbing. Visually confirming the actual bounce/lean feel needs a
   // real device/simulator, the same way this package's other animation
   // "feel" work has been verified throughout.
+
+  group('damping ratio', () {
+    test(
+        'effectiveButtonSpring equals buttonSpring when ratio is null (default)',
+        () {
+      const style = SpringPulldownMenuStyle();
+      expect(style.buttonDampingRatio, isNull);
+      expect(style.effectiveButtonSpring, same(style.buttonSpring));
+    });
+
+    test(
+        'effectiveMenuPopSpring equals menuPopSpring when ratio is null (default)',
+        () {
+      const style = SpringPulldownMenuStyle();
+      expect(style.menuDampingRatio, isNull);
+      expect(style.effectiveMenuPopSpring, same(style.menuPopSpring));
+    });
+
+    test(
+      'buttonDampingRatio recomputes damping from buttonSpring\'s own mass/stiffness',
+      () {
+        const spring = SpringDescription(mass: 2, stiffness: 300, damping: 12);
+        final style = SpringPulldownMenuStyle.defaults.copyWith(
+          buttonSpring: spring,
+          buttonDampingRatio: 1.0,
+        );
+
+        final effective = style.effectiveButtonSpring;
+        expect(effective.mass, spring.mass);
+        expect(effective.stiffness, spring.stiffness);
+        // damping = ratio * 2 * sqrt(mass * stiffness)
+        expect(
+          effective.damping,
+          closeTo(1.0 * 2 * math.sqrt(2 * 300), 0.0001),
+        );
+      },
+    );
+
+    test(
+      'a smaller buttonDampingRatio produces less damping (more oscillation), a '
+      'larger one produces more (less/no oscillation) — same mass/stiffness',
+      () {
+        const spring = SpringDescription(mass: 1, stiffness: 300, damping: 12);
+        final bouncy = SpringPulldownMenuStyle.defaults.copyWith(
+          buttonSpring: spring,
+          buttonDampingRatio: 0.2,
+        );
+        final critical = SpringPulldownMenuStyle.defaults.copyWith(
+          buttonSpring: spring,
+          buttonDampingRatio: 1.0,
+        );
+
+        expect(
+          bouncy.effectiveButtonSpring.damping,
+          lessThan(critical.effectiveButtonSpring.damping),
+        );
+      },
+    );
+
+    test('menuDampingRatio applies the same recomputation to menuPopSpring',
+        () {
+      const spring = SpringDescription(mass: 1, stiffness: 250, damping: 15);
+      final style = SpringPulldownMenuStyle.defaults.copyWith(
+        menuPopSpring: spring,
+        menuDampingRatio: 0.5,
+      );
+
+      expect(
+        style.effectiveMenuPopSpring.damping,
+        closeTo(0.5 * 2 * math.sqrt(1 * 250), 0.0001),
+      );
+    });
+  });
 }

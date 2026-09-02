@@ -39,6 +39,9 @@ No dependencies beyond the Flutter SDK.
 - Adjustable bounce intensity and lean distance for the button
   (`buttonPressScale`, `buttonBounceScale`, `buttonImpactBounceIntensity`,
   `buttonLeanDistance`) and the floating menu's own pop-in (`menuBounceScale`)
+- Adjustable damping ratio (`buttonDampingRatio`/`menuDampingRatio`) — how
+  many times the settle-to-rest motion oscillates before holding still,
+  independent of the peak scale above
 - An imperative `SpringPulldownMenuController` for opening/closing the menu from
   outside the button (e.g. a keyboard shortcut, another gesture)
 
@@ -143,6 +146,27 @@ SpringPulldownMenuButton(
 control the *shape* of the settle-back-to-rest motion (how bouncy/springy vs.
 stiff/damped it feels) — the fields above control how far each animation
 actually travels before that settle begins.
+
+For *how many times* it oscillates before holding still — independent of
+how far it travels — set `buttonDampingRatio`/`menuDampingRatio` instead of
+hand-tuning `buttonSpring`/`menuPopSpring`'s raw `damping` value:
+
+```dart
+SpringPulldownMenuButton(
+  style: SpringPulldownMenuStyle.defaults.copyWith(
+    buttonDampingRatio: 1.0, // pops to the peak and holds — no oscillation
+    // or: 0.2 for a lot of jiggle before it settles
+  ),
+  actions: [...],
+)
+```
+
+`1.0` is critically damped (no bounce at all once it starts settling — the
+peak from `buttonBounceScale` still happens, it just doesn't overshoot
+past 1.0 more than once); below `1.0` it oscillates, more times the closer
+to `0`; above `1.0` it settles slowly, also without oscillating. Leaving it
+`null` (the default) keeps whichever `buttonSpring`/`menuPopSpring` you
+already have exactly as given.
 
 See `example/` for a full runnable app — a "Bounce Playground" with a live
 slider for each of the fields above (plus a light/dark mode toggle), so you

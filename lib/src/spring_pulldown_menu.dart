@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/cupertino.dart' show CupertinoIcons, CupertinoColors;
@@ -143,6 +144,22 @@ class SpringPulldownMenuStyle {
   /// no overshoot.
   final double menuBounceScale;
 
+  /// How many times the button's settle-to-rest motion oscillates before
+  /// holding still, independent of [buttonBounceScale]'s peak — this is a
+  /// spring's *damping ratio*, a physics term for exactly that: 1.0 pops to
+  /// the peak and holds with no bounce at all; below 1.0 it oscillates,
+  /// more times the closer to 0; above 1.0 it settles slowly with no
+  /// oscillation either. Null (the default) leaves [buttonSpring]'s own
+  /// `damping` value as given. Setting this recomputes an effective damping
+  /// from [buttonSpring]'s `mass`/`stiffness` — it doesn't replace
+  /// [buttonSpring], so you can still tune those two for overall speed/feel
+  /// and use this just for "how bouncy."
+  final double? buttonDampingRatio;
+
+  /// The floating menu's equivalent of [buttonDampingRatio], applied to
+  /// [menuPopSpring] the same way.
+  final double? menuDampingRatio;
+
   const SpringPulldownMenuStyle({
     this.buttonSpring = const SpringDescription(
       mass: 1,
@@ -170,9 +187,33 @@ class SpringPulldownMenuStyle {
     this.buttonImpactBounceIntensity = 1.0,
     this.buttonLeanDistance = 20.0,
     this.menuBounceScale = 1.15,
+    this.buttonDampingRatio,
+    this.menuDampingRatio,
   });
 
   static const defaults = SpringPulldownMenuStyle();
+
+  /// [buttonSpring] as actually used — [buttonSpring] itself unless
+  /// [buttonDampingRatio] overrides just its damping.
+  SpringDescription get effectiveButtonSpring =>
+      _withDampingRatio(buttonSpring, buttonDampingRatio);
+
+  /// [menuPopSpring] as actually used — [menuPopSpring] itself unless
+  /// [menuDampingRatio] overrides just its damping.
+  SpringDescription get effectiveMenuPopSpring =>
+      _withDampingRatio(menuPopSpring, menuDampingRatio);
+
+  static SpringDescription _withDampingRatio(
+    SpringDescription spring,
+    double? dampingRatio,
+  ) {
+    if (dampingRatio == null) return spring;
+    return SpringDescription(
+      mass: spring.mass,
+      stiffness: spring.stiffness,
+      damping: dampingRatio * 2 * math.sqrt(spring.mass * spring.stiffness),
+    );
+  }
 
   SpringPulldownMenuStyle copyWith({
     SpringDescription? buttonSpring,
@@ -193,6 +234,8 @@ class SpringPulldownMenuStyle {
     double? buttonImpactBounceIntensity,
     double? buttonLeanDistance,
     double? menuBounceScale,
+    double? buttonDampingRatio,
+    double? menuDampingRatio,
   }) {
     return SpringPulldownMenuStyle(
       buttonSpring: buttonSpring ?? this.buttonSpring,
@@ -214,6 +257,8 @@ class SpringPulldownMenuStyle {
           buttonImpactBounceIntensity ?? this.buttonImpactBounceIntensity,
       buttonLeanDistance: buttonLeanDistance ?? this.buttonLeanDistance,
       menuBounceScale: menuBounceScale ?? this.menuBounceScale,
+      buttonDampingRatio: buttonDampingRatio ?? this.buttonDampingRatio,
+      menuDampingRatio: menuDampingRatio ?? this.menuDampingRatio,
     );
   }
 }
@@ -394,7 +439,7 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
       if (mounted) {
         _scaleController.animateWith(
           SpringSimulation(
-            widget.style.buttonSpring,
+            widget.style.effectiveButtonSpring,
             _scaleController.value,
             1.0,
             0,
@@ -407,7 +452,7 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
   void _onTapCancel() {
     _scaleController.animateWith(
       SpringSimulation(
-        widget.style.buttonSpring,
+        widget.style.effectiveButtonSpring,
         _scaleController.value,
         1.0,
         0,
@@ -497,7 +542,7 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
         if (mounted) {
           _scaleController.animateWith(
             SpringSimulation(
-              widget.style.buttonSpring,
+              widget.style.effectiveButtonSpring,
               _scaleController.value,
               1.0,
               0,
@@ -640,7 +685,7 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
         if (mounted) {
           _controller.animateWith(
             SpringSimulation(
-              widget.style.menuPopSpring,
+              widget.style.effectiveMenuPopSpring,
               _controller.value,
               1.0,
               0,

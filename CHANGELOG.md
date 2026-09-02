@@ -1,3 +1,24 @@
+## 0.5.0
+
+- **Non-breaking**: added `SpringPulldownMenuStyle.buttonDampingRatio` and
+  `.menuDampingRatio` (both nullable `double`, default `null`) — the
+  spring's *damping ratio*, a physics term for how many times the
+  settle-to-rest motion oscillates before holding still, completely
+  independent of `buttonBounceScale`/`menuBounceScale`'s peak. `1.0` pops to
+  the peak and holds with no oscillation; below `1.0` it oscillates, more
+  times the closer to `0`; above `1.0` it settles slowly with no
+  oscillation either.
+- These don't replace `buttonSpring`/`menuPopSpring` — when set, they
+  recompute an *effective* spring (exposed as the new
+  `SpringPulldownMenuStyle.effectiveButtonSpring`/`.effectiveMenuPopSpring`
+  getters, now used internally everywhere a spring actually drives an
+  animation) by deriving `damping` from whichever `mass`/`stiffness`
+  `buttonSpring`/`menuPopSpring` already has
+  (`damping = ratio * 2 * sqrt(mass * stiffness)`). Left `null` (the
+  default), behavior is byte-for-byte identical to before — `buttonSpring`'s
+  own `damping` value is used exactly as given.
+- `example/`'s Bounce Playground gained two more sliders for these.
+
 ## 0.4.1
 
 - **Fix**: added `cupertino_icons` as a real dependency of this package. It
