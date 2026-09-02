@@ -33,6 +33,9 @@ No dependencies beyond the Flutter SDK.
 - Configurable icon placement per row (`SpringPulldownMenuStyle.iconAffinity`
   — `trailing` by default, matching v0.1.0; `leading` to match Apple
   Calendar's own pull-down menu), directional so it flips correctly under RTL
+- Customizable row label font (`SpringPulldownMenuStyle.labelTextStyle`) —
+  size, weight, letter-spacing, font family, etc — merged on top of the
+  built-in default without disturbing the destructive/dark-mode color logic
 - An imperative `SpringPulldownMenuController` for opening/closing the menu from
   outside the button (e.g. a keyboard shortcut, another gesture)
 
@@ -98,6 +101,19 @@ Icon-leading rows (Apple Calendar's own pull-down layout):
 SpringPulldownMenuButton(
   style: SpringPulldownMenuStyle.defaults.copyWith(
     iconAffinity: SpringPulldownMenuIconAffinity.leading,
+  ),
+  actions: [...],
+)
+```
+
+Custom row label font — merges onto the default, so setting only
+`fontWeight` doesn't lose the destructive/dark-mode color already picked
+for you:
+
+```dart
+SpringPulldownMenuButton(
+  style: SpringPulldownMenuStyle.defaults.copyWith(
+    labelTextStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
   ),
   actions: [...],
 )

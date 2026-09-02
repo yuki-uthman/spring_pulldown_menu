@@ -1,3 +1,12 @@
+## 0.3.0
+
+- **Non-breaking**: added `SpringPulldownMenuStyle.labelTextStyle` — lets you
+  override a menu row's label font (size, weight, letter-spacing, family,
+  etc). Null by default, so existing callers see no change. It's merged
+  (via `TextStyle.merge`) onto the built-in default rather than replacing
+  it outright, so setting only e.g. `fontWeight` doesn't lose the
+  destructive/dark-mode `color` logic that's already computed for you.
+
 ## 0.2.0
 
 - **Non-breaking**: added `SpringPulldownMenuIconAffinity` (`leading` /

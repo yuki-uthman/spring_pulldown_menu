@@ -233,4 +233,63 @@ void main() {
     // would grow with however wide the (capped) menu happens to be.
     expect(labelLeft - iconRight, closeTo(12, 1));
   });
+
+  testWidgets('labelTextStyle overrides font size and weight', (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        const SpringPulldownMenuButton(
+          style: SpringPulldownMenuStyle(
+            labelTextStyle: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          actions: [
+            SpringPulldownMenuAction(
+                label: 'Rename', icon: CupertinoIcons.pencil),
+          ],
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(SpringPulldownMenuButton));
+    await tester.pumpAndSettle();
+
+    final text = tester.widget<Text>(find.text('Rename'));
+    expect(text.style?.fontSize, 22);
+    expect(text.style?.fontWeight, FontWeight.w700);
+  });
+
+  testWidgets(
+    'labelTextStyle merges without losing the destructive color',
+    (tester) async {
+      await tester.pumpWidget(
+        wrap(
+          SpringPulldownMenuButton(
+            style: SpringPulldownMenuStyle.defaults.copyWith(
+              labelTextStyle: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            actions: const [
+              SpringPulldownMenuAction(
+                label: 'Delete',
+                icon: CupertinoIcons.trash,
+                isDestructive: true,
+              ),
+            ],
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(SpringPulldownMenuButton));
+      await tester.pumpAndSettle();
+
+      final text = tester.widget<Text>(find.text('Delete'));
+      // fontWeight came from labelTextStyle; color is untouched by it, so
+      // it still falls through to destructiveColor rather than resetting
+      // to the plain label color.
+      expect(text.style?.fontWeight, FontWeight.w700);
+      expect(
+          text.style?.color, SpringPulldownMenuStyle.defaults.destructiveColor);
+    },
+  );
 }

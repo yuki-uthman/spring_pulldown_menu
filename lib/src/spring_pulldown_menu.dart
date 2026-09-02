@@ -101,6 +101,15 @@ class SpringPulldownMenuStyle {
   /// Calendar's own pull-down menu instead.
   final SpringPulldownMenuIconAffinity iconAffinity;
 
+  /// Overrides for a menu row's label text (size, weight, letter-spacing,
+  /// font family, etc). Merged on top of the built-in default
+  /// (`TextStyle(fontSize: 16)` plus the color already picked for you —
+  /// destructive rows use [destructiveColor], everything else adapts to
+  /// light/dark mode) via [TextStyle.merge], so setting only e.g.
+  /// `fontWeight` doesn't clobber that color logic. Null (the default)
+  /// changes nothing.
+  final TextStyle? labelTextStyle;
+
   const SpringPulldownMenuStyle({
     this.buttonSpring = const SpringDescription(
       mass: 1,
@@ -122,6 +131,7 @@ class SpringPulldownMenuStyle {
     this.destructiveColor = CupertinoColors.destructiveRed,
     this.enableHaptics = true,
     this.iconAffinity = SpringPulldownMenuIconAffinity.trailing,
+    this.labelTextStyle,
   });
 
   static const defaults = SpringPulldownMenuStyle();
@@ -139,6 +149,7 @@ class SpringPulldownMenuStyle {
     Color? destructiveColor,
     bool? enableHaptics,
     SpringPulldownMenuIconAffinity? iconAffinity,
+    TextStyle? labelTextStyle,
   }) {
     return SpringPulldownMenuStyle(
       buttonSpring: buttonSpring ?? this.buttonSpring,
@@ -153,6 +164,7 @@ class SpringPulldownMenuStyle {
       destructiveColor: destructiveColor ?? this.destructiveColor,
       enableHaptics: enableHaptics ?? this.enableHaptics,
       iconAffinity: iconAffinity ?? this.iconAffinity,
+      labelTextStyle: labelTextStyle ?? this.labelTextStyle,
     );
   }
 }
@@ -794,6 +806,7 @@ class _MenuCard extends StatelessWidget {
                         : labelColor,
                     enableHaptics: style.enableHaptics,
                     iconAffinity: style.iconAffinity,
+                    labelTextStyle: style.labelTextStyle,
                     onTap: () => onSelect(actions[i]),
                   ),
                 ],
@@ -811,6 +824,7 @@ class _MenuRow extends StatefulWidget {
   final Color labelColor;
   final bool enableHaptics;
   final SpringPulldownMenuIconAffinity iconAffinity;
+  final TextStyle? labelTextStyle;
   final VoidCallback onTap;
 
   const _MenuRow({
@@ -818,6 +832,7 @@ class _MenuRow extends StatefulWidget {
     required this.labelColor,
     required this.enableHaptics,
     required this.iconAffinity,
+    required this.labelTextStyle,
     required this.onTap,
   });
 
@@ -860,12 +875,16 @@ class _MenuRowState extends State<_MenuRow> {
   // both orderings, and it still caps + ellipsizes via the same mechanism
   // when the label doesn't fit.
   Widget _rowLabel() {
+    // .merge, not a plain override: a caller who only sets e.g. fontWeight
+    // in labelTextStyle should still get the destructive/dark-mode color
+    // already computed into labelColor, not lose it.
+    final baseStyle = TextStyle(fontSize: 16, color: widget.labelColor);
     return Flexible(
       child: Text(
         widget.action.label,
         overflow: TextOverflow.ellipsis,
         maxLines: 1,
-        style: TextStyle(fontSize: 16, color: widget.labelColor),
+        style: baseStyle.merge(widget.labelTextStyle),
       ),
     );
   }
