@@ -93,4 +93,5 @@ SpringPulldownMenuButton(
 ## Full docs
 
 See `README.md` for feature list and `example/lib/main.dart` for a complete
-runnable app.
+runnable app — an interactive "Bounce Playground" with a live slider per
+bounce/distance field.

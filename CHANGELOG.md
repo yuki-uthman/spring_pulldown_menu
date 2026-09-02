@@ -1,3 +1,18 @@
+## 0.4.1
+
+- **Fix**: added `cupertino_icons` as a real dependency of this package. It
+  renders `CupertinoIcons` glyphs by default (the button's own "..." icon,
+  action icons, etc.) but never declared the font package that actually
+  ships those glyphs, so any app that didn't separately add
+  `cupertino_icons` itself got tofu/"?" placeholder icons instead — caught
+  by actually running the example app on a simulator, not by `flutter
+  analyze`/`flutter test`, since those don't render fonts.
+- `example/` is now an interactive "Bounce Playground": a live slider for
+  each of `buttonPressScale`, `buttonBounceScale`,
+  `buttonImpactBounceIntensity`, `buttonLeanDistance`, and
+  `menuBounceScale`, each rebuilding the button/menu immediately via a new
+  `SpringPulldownMenuStyle` — no recompiling needed to feel the difference.
+
 ## 0.4.0
 
 - **Non-breaking**: added five `SpringPulldownMenuStyle` fields controlling

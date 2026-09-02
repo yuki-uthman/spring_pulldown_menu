@@ -38,7 +38,7 @@ class _ExampleAppState extends State<ExampleApp> {
         ),
       ),
       themeMode: _themeMode,
-      home: TodayScreen(
+      home: PlaygroundScreen(
         isDarkMode: _themeMode == ThemeMode.dark,
         onToggleTheme: _toggleTheme,
       ),
@@ -46,29 +46,71 @@ class _ExampleAppState extends State<ExampleApp> {
   }
 }
 
-/// The button sitting where it would in a real app — top-right of an app
-/// bar over a list of content.
-class TodayScreen extends StatelessWidget {
+/// Interactive playground for the bounce/distance style knobs — the button
+/// sits where it would in a real app (top-right of an app bar), and each
+/// slider below rebuilds it live with a new [SpringPulldownMenuStyle] so you
+/// can feel each parameter's effect immediately, no recompiling needed.
+class PlaygroundScreen extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback? onToggleTheme;
 
-  const TodayScreen({super.key, this.isDarkMode = false, this.onToggleTheme});
+  const PlaygroundScreen({
+    super.key,
+    this.isDarkMode = false,
+    this.onToggleTheme,
+  });
+
+  @override
+  State<PlaygroundScreen> createState() => _PlaygroundScreenState();
+}
+
+class _PlaygroundScreenState extends State<PlaygroundScreen> {
+  static const _defaults = SpringPulldownMenuStyle();
+
+  double _buttonPressScale = _defaults.buttonPressScale;
+  double _buttonBounceScale = _defaults.buttonBounceScale;
+  double _buttonImpactBounceIntensity = _defaults.buttonImpactBounceIntensity;
+  double _buttonLeanDistance = _defaults.buttonLeanDistance;
+  double _menuBounceScale = _defaults.menuBounceScale;
+
+  void _reset() {
+    setState(() {
+      _buttonPressScale = _defaults.buttonPressScale;
+      _buttonBounceScale = _defaults.buttonBounceScale;
+      _buttonImpactBounceIntensity = _defaults.buttonImpactBounceIntensity;
+      _buttonLeanDistance = _defaults.buttonLeanDistance;
+      _menuBounceScale = _defaults.menuBounceScale;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final style = SpringPulldownMenuStyle(
+      buttonPressScale: _buttonPressScale,
+      buttonBounceScale: _buttonBounceScale,
+      buttonImpactBounceIntensity: _buttonImpactBounceIntensity,
+      buttonLeanDistance: _buttonLeanDistance,
+      menuBounceScale: _menuBounceScale,
+    );
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Today'),
+        title: const Text('Bounce Playground'),
         actions: [
-          if (onToggleTheme != null)
+          if (widget.onToggleTheme != null)
             IconButton(
-              onPressed: onToggleTheme,
+              onPressed: widget.onToggleTheme,
               icon: Icon(
-                  isDarkMode ? CupertinoIcons.sun_max : CupertinoIcons.moon),
-              tooltip:
-                  isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
+                widget.isDarkMode
+                    ? CupertinoIcons.sun_max
+                    : CupertinoIcons.moon,
+              ),
+              tooltip: widget.isDarkMode
+                  ? 'Switch to light mode'
+                  : 'Switch to dark mode',
             ),
           SpringPulldownMenuButton(
+            style: style,
             actions: [
               SpringPulldownMenuAction(
                 label: 'Mark all complete',
@@ -96,28 +138,147 @@ class TodayScreen extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: ListView.separated(
-        // Keyed on brightness so the list rebuilds cleanly on a theme flip
-        // instead of intermittently holding the old ColorScheme.
+      body: ListView(
         key: ValueKey(Theme.of(context).brightness),
-        padding: const EdgeInsets.all(16),
-        itemCount: 8,
-        separatorBuilder: (context, index) => const SizedBox(height: 12),
-        itemBuilder: (context, index) {
-          return Container(
-            height: 64,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(16),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        children: [
+          const Text(
+            'Press and hold the "..." button above to feel the press-in + '
+            'lean. Release to feel the tap bounce. Tap outside the popup '
+            '(or pick an action) to feel the gentler "impact" bounce. '
+            'Reopen it to see the pop-in peak.',
+            style: TextStyle(height: 1.4),
+          ),
+          const SizedBox(height: 24),
+          _Knob(
+            label: 'buttonPressScale',
+            subtitle: 'How far the button shrinks on press-in.',
+            value: _buttonPressScale,
+            min: 0.3,
+            max: 1.0,
+            defaultValue: _defaults.buttonPressScale,
+            onChanged: (v) => setState(() => _buttonPressScale = v),
+          ),
+          _Knob(
+            label: 'buttonBounceScale',
+            subtitle: "Peak of the button's own tap-release bounce.",
+            value: _buttonBounceScale,
+            min: 1.0,
+            max: 1.6,
+            defaultValue: _defaults.buttonBounceScale,
+            onChanged: (v) => setState(() => _buttonBounceScale = v),
+          ),
+          _Knob(
+            label: 'buttonImpactBounceIntensity',
+            subtitle: 'Gentler bounce when the menu closes some other way. '
+                '0 disables it.',
+            value: _buttonImpactBounceIntensity,
+            min: 0.0,
+            max: 3.0,
+            defaultValue: _defaults.buttonImpactBounceIntensity,
+            onChanged: (v) => setState(() => _buttonImpactBounceIntensity = v),
+          ),
+          _Knob(
+            label: 'buttonLeanDistance',
+            subtitle: 'How far the button leans toward your touch. '
+                '0 disables the lean.',
+            value: _buttonLeanDistance,
+            min: 0.0,
+            max: 60.0,
+            defaultValue: _defaults.buttonLeanDistance,
+            onChanged: (v) => setState(() => _buttonLeanDistance = v),
+          ),
+          _Knob(
+            label: 'menuBounceScale',
+            subtitle: "Peak of the floating menu's own pop-in.",
+            value: _menuBounceScale,
+            min: 1.0,
+            max: 1.6,
+            defaultValue: _defaults.menuBounceScale,
+            onChanged: (v) => setState(() => _menuBounceScale = v),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: OutlinedButton.icon(
+              onPressed: _reset,
+              icon: const Icon(CupertinoIcons.arrow_counterclockwise),
+              label: const Text('Reset to defaults'),
             ),
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Habit ${index + 1}',
-              style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Knob extends StatelessWidget {
+  final String label;
+  final String subtitle;
+  final double value;
+  final double min;
+  final double max;
+  final double defaultValue;
+  final ValueChanged<double> onChanged;
+
+  const _Knob({
+    required this.label,
+    required this.subtitle,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.defaultValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+              Text(
+                value.toStringAsFixed(2),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
+          ),
+          Text(
+            subtitle,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+          Slider(
+            value: value,
+            min: min,
+            max: max,
+            divisions: ((max - min) / 0.02).round(),
+            label: value.toStringAsFixed(2),
+            onChanged: onChanged,
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => onChanged(defaultValue),
+              child: Text('Default: ${defaultValue.toStringAsFixed(2)}'),
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }

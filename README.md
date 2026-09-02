@@ -144,7 +144,9 @@ control the *shape* of the settle-back-to-rest motion (how bouncy/springy vs.
 stiff/damped it feels) — the fields above control how far each animation
 actually travels before that settle begins.
 
-See `example/` for a full runnable app, including a light/dark mode toggle.
+See `example/` for a full runnable app — a "Bounce Playground" with a live
+slider for each of the fields above (plus a light/dark mode toggle), so you
+can feel each one's effect on a simulator/device without recompiling.
 
 ## Known limitations
 
