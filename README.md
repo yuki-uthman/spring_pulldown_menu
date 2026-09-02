@@ -36,6 +36,9 @@ No dependencies beyond the Flutter SDK.
 - Customizable row label font (`SpringPulldownMenuStyle.labelTextStyle`) —
   size, weight, letter-spacing, font family, etc — merged on top of the
   built-in default without disturbing the destructive/dark-mode color logic
+- Adjustable bounce intensity and lean distance for the button
+  (`buttonPressScale`, `buttonBounceScale`, `buttonImpactBounceIntensity`,
+  `buttonLeanDistance`) and the floating menu's own pop-in (`menuBounceScale`)
 - An imperative `SpringPulldownMenuController` for opening/closing the menu from
   outside the button (e.g. a keyboard shortcut, another gesture)
 
@@ -118,6 +121,28 @@ SpringPulldownMenuButton(
   actions: [...],
 )
 ```
+
+Adjusting the bounce/distance feel — button press-in, its tap-release
+bounce, its gentler "impact" bounce when the menu closes some other way, how
+far it leans toward your touch, and the menu's own pop-in peak:
+
+```dart
+SpringPulldownMenuButton(
+  style: SpringPulldownMenuStyle.defaults.copyWith(
+    buttonPressScale: 0.7,             // deeper press-in (default 0.8)
+    buttonBounceScale: 1.2,            // bigger tap-release pop (default 1.12)
+    buttonImpactBounceIntensity: 0.0,  // disable the impact bounce entirely
+    buttonLeanDistance: 0.0,           // pure shrink/grow, no lean at all
+    menuBounceScale: 1.25,             // bigger pop-in peak (default 1.15)
+  ),
+  actions: [...],
+)
+```
+
+`buttonSpring` and `menuPopSpring` (both `SpringDescription`) separately
+control the *shape* of the settle-back-to-rest motion (how bouncy/springy vs.
+stiff/damped it feels) — the fields above control how far each animation
+actually travels before that settle begins.
 
 See `example/` for a full runnable app, including a light/dark mode toggle.
 

@@ -110,6 +110,39 @@ class SpringPulldownMenuStyle {
   /// changes nothing.
   final TextStyle? labelTextStyle;
 
+  /// How far the button shrinks on press-down, as a scale factor (1.0 =
+  /// no shrink). Smaller values (e.g. 0.7) read as a deeper, more dramatic
+  /// press; values close to 1.0 read as a subtle one. Also sets how far
+  /// the button leans toward the touch point while held, since both are
+  /// driven by the same press-progress signal (see [buttonLeanDistance]).
+  final double buttonPressScale;
+
+  /// The peak scale the button pops past 1.0 to on its own tap-release
+  /// bounce (see [buttonSpring] for the spring shape it then settles with).
+  /// 1.0 would mean no overshoot at all; higher values read as a bigger,
+  /// bouncier pop.
+  final double buttonBounceScale;
+
+  /// Scales the button's "impact" bounce — the shallower, gentler cousin of
+  /// [buttonBounceScale] played when the menu closes some way other than
+  /// the button's own tap (tap-outside, picking an action). 1.0 is the
+  /// built-in gentle default; 0 disables the impact bounce entirely
+  /// (the button stays still); values above 1.0 make it more pronounced,
+  /// up to as dramatic as [buttonBounceScale] itself.
+  final double buttonImpactBounceIntensity;
+
+  /// How far (in logical pixels, roughly) the button visually leans toward
+  /// the touch point while pressed, and rebounds the opposite way on
+  /// release/impact. 0 disables the lean entirely, leaving a pure
+  /// shrink/grow-in-place bounce.
+  final double buttonLeanDistance;
+
+  /// The peak scale the floating menu pops past 1.0 to when it opens, akin
+  /// to [buttonBounceScale] but for the menu card itself (see
+  /// [menuPopSpring] for the spring shape it then settles with). 1.0 means
+  /// no overshoot.
+  final double menuBounceScale;
+
   const SpringPulldownMenuStyle({
     this.buttonSpring = const SpringDescription(
       mass: 1,
@@ -132,6 +165,11 @@ class SpringPulldownMenuStyle {
     this.enableHaptics = true,
     this.iconAffinity = SpringPulldownMenuIconAffinity.trailing,
     this.labelTextStyle,
+    this.buttonPressScale = 0.8,
+    this.buttonBounceScale = 1.12,
+    this.buttonImpactBounceIntensity = 1.0,
+    this.buttonLeanDistance = 20.0,
+    this.menuBounceScale = 1.15,
   });
 
   static const defaults = SpringPulldownMenuStyle();
@@ -150,6 +188,11 @@ class SpringPulldownMenuStyle {
     bool? enableHaptics,
     SpringPulldownMenuIconAffinity? iconAffinity,
     TextStyle? labelTextStyle,
+    double? buttonPressScale,
+    double? buttonBounceScale,
+    double? buttonImpactBounceIntensity,
+    double? buttonLeanDistance,
+    double? menuBounceScale,
   }) {
     return SpringPulldownMenuStyle(
       buttonSpring: buttonSpring ?? this.buttonSpring,
@@ -165,6 +208,12 @@ class SpringPulldownMenuStyle {
       enableHaptics: enableHaptics ?? this.enableHaptics,
       iconAffinity: iconAffinity ?? this.iconAffinity,
       labelTextStyle: labelTextStyle ?? this.labelTextStyle,
+      buttonPressScale: buttonPressScale ?? this.buttonPressScale,
+      buttonBounceScale: buttonBounceScale ?? this.buttonBounceScale,
+      buttonImpactBounceIntensity:
+          buttonImpactBounceIntensity ?? this.buttonImpactBounceIntensity,
+      buttonLeanDistance: buttonLeanDistance ?? this.buttonLeanDistance,
+      menuBounceScale: menuBounceScale ?? this.menuBounceScale,
     );
   }
 }
@@ -253,12 +302,15 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
   void initState() {
     super.initState();
     // upperBound gives the spring room to overshoot past 1.0 without being
-    // clamped mid-animation.
+    // clamped mid-animation — generous and fixed rather than computed from
+    // widget.style.buttonBounceScale, since AnimationController bounds are
+    // set once at construction and can't be resized later if that style
+    // property changes at runtime.
     _scaleController = AnimationController(
       vsync: this,
       value: 1.0,
       lowerBound: 0.0,
-      upperBound: 1.35,
+      upperBound: 5.0,
     );
     _highlightController = AnimationController(
       vsync: this,
@@ -296,7 +348,7 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
 
     _scaleController.stop();
     _scaleController.animateTo(
-      0.8,
+      widget.style.buttonPressScale,
       duration: const Duration(milliseconds: 90),
       curve: Curves.easeOut,
     );
@@ -326,15 +378,15 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
     _toggleMenu();
   }
 
-  // A spring settling straight from the pressed-down 0.8 only travels a
+  // A spring settling straight from the pressed-down scale only travels a
   // small distance, so its natural overshoot past 1.0 is tiny — barely
   // perceptible next to the menu popping in at the same moment. Popping
-  // explicitly past 1.0 first, then letting the spring settle back down
-  // from there, guarantees a bounce that actually reads on screen.
+  // explicitly to buttonBounceScale first, then letting the spring settle
+  // back down from there, guarantees a bounce that actually reads on screen.
   void _playReleaseBounce() {
     _scaleController
         .animateTo(
-      1.12,
+      widget.style.buttonBounceScale,
       duration: const Duration(milliseconds: 100),
       curve: Curves.easeOut,
     )
@@ -420,9 +472,16 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
   void _playImpactBounce() {
     _pressDirection = const Offset(0, 1);
     _scaleController.stop();
+    // Baseline dip/peak (0.94 / 1.08) scaled by buttonImpactBounceIntensity —
+    // 1.0 reproduces the built-in gentle default, 0 flattens it to no bounce
+    // at all, values above 1.0 push it toward as dramatic as the button's
+    // own tap-release bounce.
+    final intensity = widget.style.buttonImpactBounceIntensity;
+    final dipScale = 1.0 - 0.06 * intensity;
+    final peakScale = 1.0 + 0.08 * intensity;
     _scaleController
         .animateTo(
-      0.94,
+      dipScale,
       duration: const Duration(milliseconds: 60),
       curve: Curves.easeOut,
     )
@@ -430,7 +489,7 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
       if (!mounted) return;
       _scaleController
           .animateTo(
-        1.08,
+        peakScale,
         duration: const Duration(milliseconds: 90),
         curve: Curves.easeOut,
       )
@@ -486,7 +545,8 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
             // out of sync with each other.
             final pushT = 1.0 - _scaleController.value;
             return Transform.translate(
-              offset: _pressDirection * (pushT * 20.0),
+              offset:
+                  _pressDirection * (pushT * widget.style.buttonLeanDistance),
               child: Transform.scale(
                 scale: _scaleController.value,
                 child: Container(
@@ -551,21 +611,43 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
   @override
   void initState() {
     super.initState();
+    // upperBound generous and fixed, same reasoning as the button's own
+    // _scaleController — set once at construction, so it needs headroom for
+    // any reasonable widget.style.menuBounceScale rather than being tied to
+    // it directly.
     _controller = AnimationController(
       vsync: this,
       value: 0,
       lowerBound: 0,
-      upperBound: 1.15,
+      upperBound: 5.0,
     );
     // Pop in on the next frame (so the overlay has a valid size to lay out
-    // against) with an overshooting spring: 0 -> 1.0, springs past to ~1.1,
-    // settles at 1.0.
+    // against). A pure spring from 0 makes the *amount* of overshoot a
+    // function of menuPopSpring's damping ratio alone — hard to predict or
+    // dial in directly. Popping explicitly to menuBounceScale first, then
+    // handing off to menuPopSpring to settle back to 1.0, mirrors the
+    // button's own _playReleaseBounce and makes the peak a real, controllable
+    // number instead of an incidental side effect of the spring's shape.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _controller.animateWith(
-          SpringSimulation(widget.style.menuPopSpring, 0, 1, 0),
-        );
-      }
+      if (!mounted) return;
+      _controller
+          .animateTo(
+        widget.style.menuBounceScale,
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOut,
+      )
+          .then((_) {
+        if (mounted) {
+          _controller.animateWith(
+            SpringSimulation(
+              widget.style.menuPopSpring,
+              _controller.value,
+              1.0,
+              0,
+            ),
+          );
+        }
+      });
     });
   }
 

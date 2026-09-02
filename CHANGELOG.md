@@ -1,3 +1,35 @@
+## 0.4.0
+
+- **Non-breaking**: added five `SpringPulldownMenuStyle` fields controlling
+  how far the button's and menu's animations actually travel, complementing
+  the existing `buttonSpring`/`menuPopSpring` (which only control the
+  settle-back *shape*, not the distance covered):
+  - `buttonPressScale` (default 0.8) — how far the button shrinks on press.
+  - `buttonBounceScale` (default 1.12) — the peak of the button's own
+    tap-release bounce.
+  - `buttonImpactBounceIntensity` (default 1.0) — multiplier on the
+    button's gentler "impact" bounce (played when the menu closes some way
+    other than the button's own tap); 0 disables it entirely.
+  - `buttonLeanDistance` (default 20.0) — how far the button leans toward
+    the touch point while pressed; 0 disables the lean, leaving a pure
+    shrink/grow in place.
+  - `menuBounceScale` (default 1.15) — the peak of the floating menu's own
+    pop-in.
+  All defaults reproduce prior behavior exactly, so existing callers see no
+  change.
+- **Behavior change**: the menu's pop-in no longer relies on a single
+  `SpringSimulation(menuPopSpring, 0, 1, 0)` for its entire 0→1 rise (which
+  made the actual overshoot amount an incidental side effect of
+  `menuPopSpring`'s damping ratio, not something directly controllable). It
+  now pops explicitly to `menuBounceScale` first (a plain 140ms curve), then
+  hands off to `menuPopSpring` to settle back to 1.0 — mirroring the
+  button's own `_playReleaseBounce` pattern, and making the peak a real,
+  predictable number. With the default `menuBounceScale: 1.15` this should
+  look and feel equivalent to before, but the *mechanism* producing that
+  1.15 changed from "incidental spring overshoot" to "an explicit target,"
+  which is worth knowing if you'd already tuned `menuPopSpring` specifically
+  to hit a particular overshoot amount.
+
 ## 0.3.0
 
 - **Non-breaking**: added `SpringPulldownMenuStyle.labelTextStyle` — lets you

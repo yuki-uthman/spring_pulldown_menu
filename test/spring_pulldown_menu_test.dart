@@ -292,4 +292,39 @@ void main() {
           text.style?.color, SpringPulldownMenuStyle.defaults.destructiveColor);
     },
   );
+
+  test(
+    'copyWith preserves bounce/lean/distance overrides for the new fields',
+    () {
+      const style = SpringPulldownMenuStyle();
+      final custom = style.copyWith(
+        buttonPressScale: 0.5,
+        buttonBounceScale: 1.3,
+        buttonImpactBounceIntensity: 2.0,
+        buttonLeanDistance: 40.0,
+        menuBounceScale: 1.4,
+      );
+
+      expect(custom.buttonPressScale, 0.5);
+      expect(custom.buttonBounceScale, 1.3);
+      expect(custom.buttonImpactBounceIntensity, 2.0);
+      expect(custom.buttonLeanDistance, 40.0);
+      expect(custom.menuBounceScale, 1.4);
+      // Untouched fields keep their defaults, not reset to null/zero.
+      expect(custom.enableHaptics, style.enableHaptics);
+    },
+  );
+
+  // No widget test below this point asserts on the actual animated
+  // Transform.scale/translate values reached mid-press: getSize() reports
+  // layout size (Transform never changes it), and getRect()/getCenter()
+  // — which resolve through localToGlobal() and should in principle walk
+  // the Transform chain — were confirmed by direct experimentation to
+  // return identical, untransformed coordinates before and mid-press in
+  // this test harness. The wiring itself (widget.style.buttonPressScale
+  // reaching _scaleController's target) was verified correct via direct
+  // instrumentation during development; the copyWith test above covers the
+  // data plumbing. Visually confirming the actual bounce/lean feel needs a
+  // real device/simulator, the same way this package's other animation
+  // "feel" work has been verified throughout.
 }
