@@ -1,3 +1,22 @@
+## 0.2.0
+
+- **Non-breaking**: added `SpringPulldownMenuIconAffinity` (`leading` /
+  `trailing`) and a `SpringPulldownMenuStyle.iconAffinity` field controlling
+  where each row's icon sits relative to its label. **Default is
+  `trailing`** — the original v0.1.0 layout (label, then icon) — so existing
+  callers see no visual change. Set `leading` to match Apple Calendar's own
+  pull-down menu (icon, then label). Directional, not left/right, so it
+  flips correctly under RTL.
+- **Fix**: a menu row's label no longer overflows (`RenderFlex overflowed by
+  N pixels`) when it's wider than `menuWidth` minus the icon and padding —
+  it now ellipsizes instead, at any `menuWidth` and under any font metrics.
+  Previously the label had no flex inside a `spaceBetween` `Row`; it's now
+  wrapped in `Expanded` with `TextOverflow.ellipsis`.
+- No other behavior changed: `dismiss(andThen: action.onTap)` ordering,
+  `enableHaptics` semantics/default, row keylessness, the icon's widget
+  identity, and the button's own rest chrome (38pt circle, 8px padding
+  around a 22pt glyph, hairline border) are all untouched.
+
 ## 0.1.0
 
 Initial release.

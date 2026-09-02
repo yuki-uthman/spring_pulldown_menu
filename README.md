@@ -24,6 +24,10 @@ No dependencies beyond the Flutter SDK.
   matching real iOS — toggle off via `SpringPulldownMenuStyle.enableHaptics`
 - VoiceOver / TalkBack labels on the button and every menu row
 - Dark mode support
+- Row labels ellipsize instead of overflowing at any `menuWidth`
+- Configurable icon placement per row (`SpringPulldownMenuStyle.iconAffinity`
+  — `trailing` by default, matching v0.1.0; `leading` to match Apple
+  Calendar's own pull-down menu), directional so it flips correctly under RTL
 - An imperative `SpringPulldownMenuController` for opening/closing the menu from
   outside the button (e.g. a keyboard shortcut, another gesture)
 
@@ -76,6 +80,17 @@ SpringPulldownMenuButton(
   style: SpringPulldownMenuStyle.defaults.copyWith(
     menuWidth: 280,
     cornerRadius: 20,
+  ),
+  actions: [...],
+)
+```
+
+Icon-leading rows (Apple Calendar's own pull-down layout):
+
+```dart
+SpringPulldownMenuButton(
+  style: SpringPulldownMenuStyle.defaults.copyWith(
+    iconAffinity: SpringPulldownMenuIconAffinity.leading,
   ),
   actions: [...],
 )

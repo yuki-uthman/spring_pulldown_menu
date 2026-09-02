@@ -8,7 +8,7 @@
 
 ```yaml
 dependencies:
-  spring_pulldown_menu: ^0.1.0
+  spring_pulldown_menu: ^0.2.0
 ```
 
 ```dart
@@ -22,9 +22,12 @@ import 'package:spring_pulldown_menu/spring_pulldown_menu.dart';
   (its natural home, top-right, matching native iOS placement) or anywhere else.
 - `SpringPulldownMenuAction({ label, icon, onTap, isDestructive })` — one menu row.
   Set `isDestructive: true` for actions like "Delete" (renders in `SpringPulldownMenuStyle.destructiveColor`).
-- `SpringPulldownMenuStyle({ buttonSpring, menuPopSpring, closeDuration, closeCurve, menuWidth, cornerRadius, blurSigma, lightFillColor, darkFillColor, destructiveColor, enableHaptics })`
+- `SpringPulldownMenuStyle({ buttonSpring, menuPopSpring, closeDuration, closeCurve, menuWidth, cornerRadius, blurSigma, lightFillColor, darkFillColor, destructiveColor, enableHaptics, iconAffinity })`
   — visual/physics tuning. Use `SpringPulldownMenuStyle.defaults.copyWith(...)` to
   override only what you need.
+- `SpringPulldownMenuIconAffinity` (`leading` | `trailing`) — where a row's icon
+  sits relative to its label. Default `trailing` (v0.1.0 layout: label, then
+  icon). Directional, so it flips correctly under RTL.
 - `SpringPulldownMenuController()` — optional imperative handle: `.open()`, `.close()`,
   `.toggle()`, `.isOpen`. Pass it to `SpringPulldownMenuButton.controller` if you
   need to drive the menu from outside the button itself.
@@ -56,6 +59,8 @@ SpringPulldownMenuButton(
 - Menu row taps already fire `HapticFeedback.selectionClick()` — don't add your
   own haptic call in `onTap`. Set `SpringPulldownMenuStyle.enableHaptics: false`
   to disable it instead.
+- Row labels already ellipsize when too wide for `menuWidth` — no need to
+  set a `maxLines`/`overflow` on your own text.
 
 ## Known limitation
 

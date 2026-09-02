@@ -51,7 +51,8 @@ void main() {
         SpringPulldownMenuButton(
           controller: controller,
           actions: const [
-            SpringPulldownMenuAction(label: 'Delete', icon: CupertinoIcons.trash),
+            SpringPulldownMenuAction(
+                label: 'Delete', icon: CupertinoIcons.trash),
           ],
         ),
       ),
@@ -69,4 +70,88 @@ void main() {
     expect(controller.isOpen, isFalse);
     expect(find.text('Delete'), findsNothing);
   });
+
+  testWidgets(
+    'a label wider than menuWidth ellipsizes instead of overflowing',
+    (tester) async {
+      // Under flutter_test's placeholder font (no real glyph metrics), any
+      // label this long measures wider than the default menuWidth of 240 —
+      // reproduces the exact RenderFlex overflow this regression test
+      // guards against, without relying on a specific pixel count.
+      final controller = SpringPulldownMenuController();
+
+      await tester.pumpWidget(
+        wrap(
+          SpringPulldownMenuButton(
+            controller: controller,
+            actions: const [
+              SpringPulldownMenuAction(
+                label:
+                    'A label long enough to overflow any reasonable menu width',
+                icon: CupertinoIcons.clock,
+              ),
+            ],
+          ),
+        ),
+      );
+
+      controller.open();
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byIcon(CupertinoIcons.clock), findsOneWidget);
+    },
+  );
+
+  testWidgets('iconAffinity.leading places the icon before the label', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        SpringPulldownMenuButton(
+          style: SpringPulldownMenuStyle.defaults.copyWith(
+            iconAffinity: SpringPulldownMenuIconAffinity.leading,
+          ),
+          actions: const [
+            SpringPulldownMenuAction(
+              label: 'Prayer Times',
+              icon: CupertinoIcons.clock,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(SpringPulldownMenuButton));
+    await tester.pumpAndSettle();
+
+    final iconLeft = tester.getTopLeft(find.byIcon(CupertinoIcons.clock)).dx;
+    final labelLeft = tester.getTopLeft(find.text('Prayer Times')).dx;
+    expect(iconLeft, lessThan(labelLeft));
+  });
+
+  testWidgets(
+    'iconAffinity defaults to trailing (icon after the label, v0.1.0 layout)',
+    (tester) async {
+      await tester.pumpWidget(
+        wrap(
+          const SpringPulldownMenuButton(
+            actions: [
+              SpringPulldownMenuAction(
+                label: 'Prayer Times',
+                icon: CupertinoIcons.clock,
+              ),
+            ],
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(SpringPulldownMenuButton));
+      await tester.pumpAndSettle();
+
+      final iconLeft = tester.getTopLeft(find.byIcon(CupertinoIcons.clock)).dx;
+      final labelLeft = tester.getTopLeft(find.text('Prayer Times')).dx;
+      expect(labelLeft, lessThan(iconLeft));
+    },
+  );
 }

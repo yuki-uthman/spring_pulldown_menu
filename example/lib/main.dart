@@ -18,9 +18,8 @@ class _ExampleAppState extends State<ExampleApp> {
 
   void _toggleTheme() {
     setState(() {
-      _themeMode = _themeMode == ThemeMode.dark
-          ? ThemeMode.light
-          : ThemeMode.dark;
+      _themeMode =
+          _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
     });
   }
 
@@ -64,8 +63,10 @@ class TodayScreen extends StatelessWidget {
           if (onToggleTheme != null)
             IconButton(
               onPressed: onToggleTheme,
-              icon: Icon(isDarkMode ? CupertinoIcons.sun_max : CupertinoIcons.moon),
-              tooltip: isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
+              icon: Icon(
+                  isDarkMode ? CupertinoIcons.sun_max : CupertinoIcons.moon),
+              tooltip:
+                  isDarkMode ? 'Switch to light mode' : 'Switch to dark mode',
             ),
           SpringPulldownMenuButton(
             actions: [

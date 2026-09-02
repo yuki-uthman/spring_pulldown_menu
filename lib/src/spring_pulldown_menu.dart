@@ -47,6 +47,17 @@ class SpringPulldownMenuAction {
   });
 }
 
+/// Where [SpringPulldownMenuAction.icon] sits relative to its label within a
+/// menu row. Directional (leading/trailing), not left/right, so RTL locales
+/// flip correctly.
+enum SpringPulldownMenuIconAffinity {
+  /// Icon before the label — e.g. Apple Calendar's own pull-down menu.
+  leading,
+
+  /// Icon after the label — this package's original v0.1.0 layout.
+  trailing,
+}
+
 /// Visual + physics configuration for [SpringPulldownMenuButton] — the same role
 /// [ThemeData]/`CardTheme` play for built-in Material widgets. Override only
 /// the fields you care about via [copyWith]; everything else falls back to
@@ -79,6 +90,13 @@ class SpringPulldownMenuStyle {
   /// manages its own haptics policy (or for tests).
   final bool enableHaptics;
 
+  /// Where each row's icon sits relative to its label. Defaults to
+  /// [SpringPulldownMenuIconAffinity.trailing] — this package's original
+  /// v0.1.0 layout — so picking this default up costs existing callers
+  /// nothing; set [SpringPulldownMenuIconAffinity.leading] to match Apple
+  /// Calendar's own pull-down menu instead.
+  final SpringPulldownMenuIconAffinity iconAffinity;
+
   const SpringPulldownMenuStyle({
     this.buttonSpring = const SpringDescription(
       mass: 1,
@@ -99,6 +117,7 @@ class SpringPulldownMenuStyle {
     this.darkFillColor,
     this.destructiveColor = CupertinoColors.destructiveRed,
     this.enableHaptics = true,
+    this.iconAffinity = SpringPulldownMenuIconAffinity.trailing,
   });
 
   static const defaults = SpringPulldownMenuStyle();
@@ -115,6 +134,7 @@ class SpringPulldownMenuStyle {
     Color? darkFillColor,
     Color? destructiveColor,
     bool? enableHaptics,
+    SpringPulldownMenuIconAffinity? iconAffinity,
   }) {
     return SpringPulldownMenuStyle(
       buttonSpring: buttonSpring ?? this.buttonSpring,
@@ -128,6 +148,7 @@ class SpringPulldownMenuStyle {
       darkFillColor: darkFillColor ?? this.darkFillColor,
       destructiveColor: destructiveColor ?? this.destructiveColor,
       enableHaptics: enableHaptics ?? this.enableHaptics,
+      iconAffinity: iconAffinity ?? this.iconAffinity,
     );
   }
 }
@@ -182,7 +203,8 @@ class SpringPulldownMenuButton extends StatefulWidget {
   });
 
   @override
-  State<SpringPulldownMenuButton> createState() => _SpringPulldownMenuButtonState();
+  State<SpringPulldownMenuButton> createState() =>
+      _SpringPulldownMenuButtonState();
 }
 
 class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
@@ -208,7 +230,8 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
   Offset _pressDirection = Offset.zero;
 
   SpringPulldownMenuController get _effectiveController =>
-      widget.controller ?? (_internalController ??= SpringPulldownMenuController());
+      widget.controller ??
+      (_internalController ??= SpringPulldownMenuController());
 
   @override
   void initState() {
@@ -251,9 +274,8 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
     final box = _buttonKey.currentContext?.findRenderObject() as RenderBox?;
     if (box != null && box.hasSize) {
       final delta = details.localPosition - box.size.center(Offset.zero);
-      _pressDirection = delta.distance > 0
-          ? delta / delta.distance
-          : Offset.zero;
+      _pressDirection =
+          delta.distance > 0 ? delta / delta.distance : Offset.zero;
     }
 
     _scaleController.stop();
@@ -296,22 +318,22 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
   void _playReleaseBounce() {
     _scaleController
         .animateTo(
-          1.12,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOut,
-        )
+      1.12,
+      duration: const Duration(milliseconds: 100),
+      curve: Curves.easeOut,
+    )
         .then((_) {
-          if (mounted) {
-            _scaleController.animateWith(
-              SpringSimulation(
-                widget.style.buttonSpring,
-                _scaleController.value,
-                1.0,
-                0,
-              ),
-            );
-          }
-        });
+      if (mounted) {
+        _scaleController.animateWith(
+          SpringSimulation(
+            widget.style.buttonSpring,
+            _scaleController.value,
+            1.0,
+            0,
+          ),
+        );
+      }
+    });
   }
 
   void _onTapCancel() {
@@ -384,31 +406,31 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
     _scaleController.stop();
     _scaleController
         .animateTo(
-          0.94,
-          duration: const Duration(milliseconds: 60),
-          curve: Curves.easeOut,
-        )
+      0.94,
+      duration: const Duration(milliseconds: 60),
+      curve: Curves.easeOut,
+    )
         .then((_) {
-          if (!mounted) return;
-          _scaleController
-              .animateTo(
-                1.08,
-                duration: const Duration(milliseconds: 90),
-                curve: Curves.easeOut,
-              )
-              .then((_) {
-                if (mounted) {
-                  _scaleController.animateWith(
-                    SpringSimulation(
-                      widget.style.buttonSpring,
-                      _scaleController.value,
-                      1.0,
-                      0,
-                    ),
-                  );
-                }
-              });
-        });
+      if (!mounted) return;
+      _scaleController
+          .animateTo(
+        1.08,
+        duration: const Duration(milliseconds: 90),
+        curve: Curves.easeOut,
+      )
+          .then((_) {
+        if (mounted) {
+          _scaleController.animateWith(
+            SpringSimulation(
+              widget.style.buttonSpring,
+              _scaleController.value,
+              1.0,
+              0,
+            ),
+          );
+        }
+      });
+    });
   }
 
   @override
@@ -599,9 +621,9 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
     );
 
     Widget dismissRegion() => GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => dismiss(),
-    );
+          behavior: HitTestBehavior.opaque,
+          onTap: () => dismiss(),
+        );
 
     return Stack(
       children: [
@@ -701,8 +723,7 @@ class _MenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fillColor =
-        (isDark ? style.darkFillColor : style.lightFillColor) ??
+    final fillColor = (isDark ? style.darkFillColor : style.lightFillColor) ??
         (isDark
             ? const Color(0xFF2C2C2E).withValues(alpha: 0.78)
             : Colors.white.withValues(alpha: 0.78));
@@ -748,6 +769,7 @@ class _MenuCard extends StatelessWidget {
                       ? style.destructiveColor
                       : labelColor,
                   enableHaptics: style.enableHaptics,
+                  iconAffinity: style.iconAffinity,
                   onTap: () => onSelect(actions[i]),
                 ),
               ],
@@ -763,12 +785,14 @@ class _MenuRow extends StatefulWidget {
   final SpringPulldownMenuAction action;
   final Color labelColor;
   final bool enableHaptics;
+  final SpringPulldownMenuIconAffinity iconAffinity;
   final VoidCallback onTap;
 
   const _MenuRow({
     required this.action,
     required this.labelColor,
     required this.enableHaptics,
+    required this.iconAffinity,
     required this.onTap,
   });
 
@@ -790,6 +814,24 @@ class _MenuRowState extends State<_MenuRow> {
     widget.onTap();
   }
 
+  // Expanded (not a bare Text under spaceBetween) so a label wider than the
+  // menu's own width — any label, at any menuWidth, under any font metrics
+  // — ellipsizes instead of throwing a RenderFlex overflow.
+  Widget _rowLabel() {
+    return Expanded(
+      child: Text(
+        widget.action.label,
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+        style: TextStyle(fontSize: 16, color: widget.labelColor),
+      ),
+    );
+  }
+
+  Widget _rowIcon() {
+    return Icon(widget.action.icon, size: 19, color: widget.labelColor);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -808,14 +850,14 @@ class _MenuRowState extends State<_MenuRow> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  widget.action.label,
-                  style: TextStyle(fontSize: 16, color: widget.labelColor),
-                ),
-                Icon(widget.action.icon, size: 19, color: widget.labelColor),
-              ],
+              // Row lays its children out start-to-end per the ambient
+              // Directionality, so simply choosing which end the icon goes
+              // on below is enough to flip correctly under RTL — no manual
+              // left/right handling needed.
+              children:
+                  widget.iconAffinity == SpringPulldownMenuIconAffinity.leading
+                      ? [_rowIcon(), _rowLabel()]
+                      : [_rowLabel(), _rowIcon()],
             ),
           ),
         ),
