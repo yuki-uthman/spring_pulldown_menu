@@ -61,6 +61,13 @@ SpringPulldownMenuButton(
   to disable it instead.
 - Row labels already ellipsize when too wide for `menuWidth` — no need to
   set a `maxLines`/`overflow` on your own text.
+- `menuWidth` is a MAXIMUM, not a fixed width — the menu already shrinks to
+  fit its widest row's actual content. Don't assume the rendered menu is
+  exactly `menuWidth` wide; it's usually narrower for short labels.
+- The icon-to-label gap is already a fixed 12px — don't add extra spacing
+  between `icon` and `label` yourself, and don't reach for
+  `mainAxisAlignment: spaceBetween` if you're composing your own row-like
+  layout elsewhere in the same style.
 
 ## Known limitation
 

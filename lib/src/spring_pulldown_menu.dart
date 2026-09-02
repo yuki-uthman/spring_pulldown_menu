@@ -74,6 +74,10 @@ class SpringPulldownMenuStyle {
   final Duration closeDuration;
   final Curve closeCurve;
 
+  /// The menu's *maximum* width, not a fixed one — as of v0.2.0 it shrinks
+  /// to fit its widest row's actual content, and only grows up to this cap
+  /// for a row too wide to fit (which then ellipsizes instead of expanding
+  /// the menu further).
   final double menuWidth;
   final double cornerRadius;
   final double blurSigma;
@@ -586,11 +590,15 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
 
     // Anchor the card so it hangs below the button, right-edge aligned with
     // it (matching where a native iOS pull-down menu opens from a top-right
-    // "..." button), clamped to stay fully on-screen.
+    // "..." button), clamped to stay fully on-screen. Positioned from the
+    // *right* — not a computed left offset — so this holds regardless of
+    // the card's actual (shrink-to-fit) width: right-edge alignment doesn't
+    // need to know that width up front the way left-edge placement would.
     final estimatedHeight = widget.actions.length * 48.0 + 16;
 
-    double left = widget.anchor.dx + widget.anchorSize.width - style.menuWidth;
-    left = left.clamp(12.0, screenSize.width - style.menuWidth - 12.0);
+    final right =
+        (screenSize.width - (widget.anchor.dx + widget.anchorSize.width))
+            .clamp(12.0, screenSize.width - 12.0);
 
     double top = widget.anchor.dy + widget.anchorSize.height + 8;
     if (top + estimatedHeight > screenSize.height - 24) {
@@ -676,9 +684,8 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
           child: dismissRegion(),
         ),
         Positioned(
-          left: left,
+          right: right,
           top: top,
-          width: style.menuWidth,
           child: AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
@@ -694,11 +701,16 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
                 ),
               );
             },
-            child: _MenuCard(
-              actions: widget.actions,
-              style: style,
-              isDark: isDark,
-              onSelect: (action) => dismiss(andThen: action.onTap),
+            // menuWidth is a cap here, not a fixed width — the card shrinks
+            // to fit its widest row otherwise (see _MenuCard).
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: style.menuWidth),
+              child: _MenuCard(
+                actions: widget.actions,
+                style: style,
+                isDark: isDark,
+                onSelect: (action) => dismiss(andThen: action.onTap),
+              ),
             ),
           ),
         ),
@@ -757,23 +769,36 @@ class _MenuCard extends StatelessWidget {
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var i = 0; i < actions.length; i++) ...[
-                if (i > 0)
-                  Divider(height: 1, thickness: 0.6, color: dividerColor),
-                _MenuRow(
-                  action: actions[i],
-                  labelColor: actions[i].isDestructive
-                      ? style.destructiveColor
-                      : labelColor,
-                  enableHaptics: style.enableHaptics,
-                  iconAffinity: style.iconAffinity,
-                  onTap: () => onSelect(actions[i]),
-                ),
+          // IntrinsicWidth + CrossAxisAlignment.stretch, rather than a plain
+          // min-size Column: a plain Column sizes to its widest child, but
+          // Divider self-expands to fill whatever width it's *offered*
+          // regardless of the other rows' actual content — it would report
+          // back the full incoming (capped) width even for a menu of two
+          // short rows, forcing the menu wide again. IntrinsicWidth measures
+          // every row's true content width first, so the dividers stretch
+          // to match the *rows*, not the other way around. The outer
+          // ConstrainedBox (see the overlay's Positioned) still bounds how
+          // wide that resolved value is allowed to be.
+          child: IntrinsicWidth(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var i = 0; i < actions.length; i++) ...[
+                  if (i > 0)
+                    Divider(height: 1, thickness: 0.6, color: dividerColor),
+                  _MenuRow(
+                    action: actions[i],
+                    labelColor: actions[i].isDestructive
+                        ? style.destructiveColor
+                        : labelColor,
+                    enableHaptics: style.enableHaptics,
+                    iconAffinity: style.iconAffinity,
+                    onTap: () => onSelect(actions[i]),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -814,11 +839,28 @@ class _MenuRowState extends State<_MenuRow> {
     widget.onTap();
   }
 
-  // Expanded (not a bare Text under spaceBetween) so a label wider than the
-  // menu's own width — any label, at any menuWidth, under any font metrics
-  // — ellipsizes instead of throwing a RenderFlex overflow.
+  // Apple's own pull-downs keep a small fixed gap between icon and label,
+  // with any slack falling elsewhere — not a spaceBetween-style gap that
+  // grows with the menu's width.
+  static const _rowGap = SizedBox(width: 12);
+
+  Widget _rowIcon() {
+    return Icon(widget.action.icon, size: 19, color: widget.labelColor);
+  }
+
+  // Flexible with FlexFit.loose (the default) — deliberately NOT Expanded.
+  // Expanded forces the label's box to consume its entire allocated share of
+  // the row's width even when the text itself is shorter, which is invisible
+  // when the label is the LAST widget in the row (iconAffinity.leading) but
+  // reintroduces the exact "two disconnected columns" gap this exists to fix
+  // when the label comes FIRST (iconAffinity.trailing, the default): a short
+  // label would still force the icon after it out to the row's far edge.
+  // Flexible lets the label shrink to its own text width whenever the row
+  // isn't already exactly that wide, so the icon stays snug against it in
+  // both orderings, and it still caps + ellipsizes via the same mechanism
+  // when the label doesn't fit.
   Widget _rowLabel() {
-    return Expanded(
+    return Flexible(
       child: Text(
         widget.action.label,
         overflow: TextOverflow.ellipsis,
@@ -826,10 +868,6 @@ class _MenuRowState extends State<_MenuRow> {
         style: TextStyle(fontSize: 16, color: widget.labelColor),
       ),
     );
-  }
-
-  Widget _rowIcon() {
-    return Icon(widget.action.icon, size: 19, color: widget.labelColor);
   }
 
   @override
@@ -856,8 +894,8 @@ class _MenuRowState extends State<_MenuRow> {
               // left/right handling needed.
               children:
                   widget.iconAffinity == SpringPulldownMenuIconAffinity.leading
-                      ? [_rowIcon(), _rowLabel()]
-                      : [_rowLabel(), _rowIcon()],
+                      ? [_rowIcon(), _rowGap, _rowLabel()]
+                      : [_rowLabel(), _rowGap, _rowIcon()],
             ),
           ),
         ),

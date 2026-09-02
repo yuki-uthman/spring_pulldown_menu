@@ -24,7 +24,12 @@ No dependencies beyond the Flutter SDK.
   matching real iOS — toggle off via `SpringPulldownMenuStyle.enableHaptics`
 - VoiceOver / TalkBack labels on the button and every menu row
 - Dark mode support
-- Row labels ellipsize instead of overflowing at any `menuWidth`
+- The menu shrinks to fit its widest row's actual content, growing only up
+  to `menuWidth` as a maximum — not a fixed size regardless of content
+- A fixed icon-to-label gap (12px) that doesn't grow with the menu's width,
+  matching Apple's own pull-downs
+- Row labels ellipsize instead of overflowing when a row is too wide for
+  `menuWidth`
 - Configurable icon placement per row (`SpringPulldownMenuStyle.iconAffinity`
   — `trailing` by default, matching v0.1.0; `leading` to match Apple
   Calendar's own pull-down menu), directional so it flips correctly under RTL
@@ -73,12 +78,14 @@ menuController.close();
 menuController.toggle();
 ```
 
-Custom styling (springs, timing, colors, size) via `SpringPulldownMenuStyle`:
+Custom styling (springs, timing, colors, size) via `SpringPulldownMenuStyle`.
+`menuWidth` is a *maximum*, not a fixed width — the menu shrinks to fit its
+content otherwise:
 
 ```dart
 SpringPulldownMenuButton(
   style: SpringPulldownMenuStyle.defaults.copyWith(
-    menuWidth: 280,
+    menuWidth: 280, // cap; short rows render narrower than this
     cornerRadius: 20,
   ),
   actions: [...],

@@ -8,10 +8,24 @@
   pull-down menu (icon, then label). Directional, not left/right, so it
   flips correctly under RTL.
 - **Fix**: a menu row's label no longer overflows (`RenderFlex overflowed by
-  N pixels`) when it's wider than `menuWidth` minus the icon and padding —
-  it now ellipsizes instead, at any `menuWidth` and under any font metrics.
-  Previously the label had no flex inside a `spaceBetween` `Row`; it's now
-  wrapped in `Expanded` with `TextOverflow.ellipsis`.
+  N pixels`) when it's wider than the menu's own width — it now ellipsizes
+  instead, at any width and under any font metrics. The label is wrapped in
+  `Flexible` (not `Expanded` — see below) with `TextOverflow.ellipsis`.
+- **Fix / behavior change**: the icon-to-label gap is now a fixed 12px,
+  matching Apple's own pull-downs, instead of a `spaceBetween` gap that grew
+  to fill however wide the menu happened to be (visually "two disconnected
+  columns" for any row shorter than the menu's width). `Flexible` rather
+  than `Expanded` was needed for the fix to actually hold in both
+  `iconAffinity` directions: `Expanded` forces the label to consume its
+  entire allocated share of the row even when the text is shorter, which is
+  invisible when the label is the *last* widget (`leading`) but reintroduces
+  the exact same gap when the label comes *first* (`trailing`, the default).
+- **Behavior change (field repurposed, not renamed)**: `menuWidth` is now a
+  *maximum* width, not a fixed one. The menu shrinks to fit its widest row's
+  actual content, and only grows up to `menuWidth` for a row too wide to fit
+  (which then ellipsizes per the fix above, rather than the menu expanding
+  further). A menu of short rows is now visibly narrower than 240pt by
+  default; pass `menuWidth` if you want to guarantee a specific maximum.
 - No other behavior changed: `dismiss(andThen: action.onTap)` ordering,
   `enableHaptics` semantics/default, row keylessness, the icon's widget
   identity, and the button's own rest chrome (38pt circle, 8px padding

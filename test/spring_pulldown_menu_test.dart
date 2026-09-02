@@ -154,4 +154,83 @@ void main() {
       expect(labelLeft, lessThan(iconLeft));
     },
   );
+
+  testWidgets(
+    'the menu shrinks to fit a short row instead of using the full menuWidth cap',
+    (tester) async {
+      await tester.pumpWidget(
+        wrap(
+          const SpringPulldownMenuButton(
+            actions: [
+              SpringPulldownMenuAction(label: 'Hi', icon: CupertinoIcons.clock),
+            ],
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(SpringPulldownMenuButton));
+      await tester.pumpAndSettle();
+
+      final menuWidth = tester.getSize(find.byType(ClipRRect).first).width;
+      // The default cap is 240 — a two-letter label should resolve to
+      // nowhere near that, proving this measures actual content width and
+      // not just the cap.
+      expect(menuWidth, lessThan(150));
+    },
+  );
+
+  testWidgets(
+    'a row too wide for the cap still resolves to exactly menuWidth, not wider',
+    (tester) async {
+      const style = SpringPulldownMenuStyle(menuWidth: 200);
+
+      await tester.pumpWidget(
+        wrap(
+          const SpringPulldownMenuButton(
+            style: style,
+            actions: [
+              SpringPulldownMenuAction(
+                label:
+                    'A label long enough to overflow any reasonable menu width',
+                icon: CupertinoIcons.clock,
+              ),
+            ],
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(SpringPulldownMenuButton));
+      await tester.pumpAndSettle();
+
+      final menuWidth = tester.getSize(find.byType(ClipRRect).first).width;
+      expect(menuWidth, lessThanOrEqualTo(style.menuWidth));
+      expect(menuWidth, greaterThan(style.menuWidth - 1));
+    },
+  );
+
+  testWidgets('the icon-to-label gap stays fixed regardless of menu width', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        const SpringPulldownMenuButton(
+          style: SpringPulldownMenuStyle(
+            iconAffinity: SpringPulldownMenuIconAffinity.leading,
+          ),
+          actions: [
+            SpringPulldownMenuAction(label: 'Hi', icon: CupertinoIcons.clock),
+          ],
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(SpringPulldownMenuButton));
+    await tester.pumpAndSettle();
+
+    final iconRight = tester.getTopRight(find.byIcon(CupertinoIcons.clock)).dx;
+    final labelLeft = tester.getTopLeft(find.text('Hi')).dx;
+    // Fixed 12px SizedBox between them — not a spaceBetween-style gap that
+    // would grow with however wide the (capped) menu happens to be.
+    expect(labelLeft - iconRight, closeTo(12, 1));
+  });
 }
