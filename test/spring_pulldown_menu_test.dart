@@ -362,7 +362,8 @@ void main() {
           ),
         );
 
-        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+        final buttonRect =
+            tester.getRect(find.byType(SpringPulldownMenuButton));
 
         await tester.tap(find.byType(SpringPulldownMenuButton));
         await tester.pumpAndSettle();
@@ -394,7 +395,8 @@ void main() {
           ),
         );
 
-        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+        final buttonRect =
+            tester.getRect(find.byType(SpringPulldownMenuButton));
 
         await tester.tap(find.byType(SpringPulldownMenuButton));
         await tester.pumpAndSettle();
@@ -413,7 +415,8 @@ void main() {
     Widget wrapAt(double left, Widget child) {
       return MaterialApp(
         home: Scaffold(
-          body: Stack(children: [Positioned(left: left, top: 40, child: child)]),
+          body:
+              Stack(children: [Positioned(left: left, top: 40, child: child)]),
         ),
       );
     }
@@ -423,7 +426,8 @@ void main() {
       expect(style.horizontalAnchor, SpringPulldownMenuHorizontalAnchor.right);
     });
 
-    test('copyWith overrides horizontalAnchor without disturbing other fields', () {
+    test('copyWith overrides horizontalAnchor without disturbing other fields',
+        () {
       const style = SpringPulldownMenuStyle();
       final custom = style.copyWith(
         horizontalAnchor: SpringPulldownMenuHorizontalAnchor.left,
@@ -453,7 +457,8 @@ void main() {
           ),
         );
 
-        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+        final buttonRect =
+            tester.getRect(find.byType(SpringPulldownMenuButton));
 
         await tester.tap(find.byType(SpringPulldownMenuButton));
         await tester.pumpAndSettle();
@@ -468,7 +473,8 @@ void main() {
     testWidgets(
       "auto resolves to right-anchored for a button near the right edge (today's behavior)",
       (tester) async {
-        final screenSize = tester.view.physicalSize / tester.view.devicePixelRatio;
+        final screenSize =
+            tester.view.physicalSize / tester.view.devicePixelRatio;
 
         await tester.pumpWidget(
           wrapAt(
@@ -487,7 +493,8 @@ void main() {
           ),
         );
 
-        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+        final buttonRect =
+            tester.getRect(find.byType(SpringPulldownMenuButton));
 
         await tester.tap(find.byType(SpringPulldownMenuButton));
         await tester.pumpAndSettle();
@@ -502,7 +509,8 @@ void main() {
     testWidgets(
       'explicit left forces left-anchoring regardless of screen position',
       (tester) async {
-        final screenSize = tester.view.physicalSize / tester.view.devicePixelRatio;
+        final screenSize =
+            tester.view.physicalSize / tester.view.devicePixelRatio;
 
         await tester.pumpWidget(
           wrapAt(
@@ -521,7 +529,8 @@ void main() {
           ),
         );
 
-        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+        final buttonRect =
+            tester.getRect(find.byType(SpringPulldownMenuButton));
 
         await tester.tap(find.byType(SpringPulldownMenuButton));
         await tester.pumpAndSettle();
@@ -551,7 +560,8 @@ void main() {
           ),
         );
 
-        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+        final buttonRect =
+            tester.getRect(find.byType(SpringPulldownMenuButton));
 
         await tester.tap(find.byType(SpringPulldownMenuButton));
         await tester.pumpAndSettle();
@@ -582,7 +592,8 @@ void main() {
           ),
         );
 
-        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+        final buttonRect =
+            tester.getRect(find.byType(SpringPulldownMenuButton));
 
         await tester.tap(find.byType(SpringPulldownMenuButton));
         await tester.pumpAndSettle();
@@ -590,6 +601,60 @@ void main() {
         final cardTopLeft = tester.getTopLeft(find.byType(ClipRRect).first);
         expect(cardTopLeft.dx, closeTo(buttonRect.left, 0.5));
         expect(cardTopLeft.dy, closeTo(buttonRect.top, 0.5));
+      },
+    );
+  });
+
+  group('sizing', () {
+    Widget wrapTight(BoxConstraints constraints, Widget child) {
+      return MaterialApp(
+        home: Scaffold(
+          body: Center(
+              child: ConstrainedBox(constraints: constraints, child: child)),
+        ),
+      );
+    }
+
+    testWidgets(
+      "stays at its natural compact size inside a tightly-constrained "
+      "parent (e.g. AppBar.leading's fixed-width slot) instead of "
+      'stretching to fill it',
+      (tester) async {
+        const button = SpringPulldownMenuButton(
+          actions: [
+            SpringPulldownMenuAction(
+              label: 'Rename',
+              icon: CupertinoIcons.pencil,
+            ),
+          ],
+        );
+
+        // Loose (AppBar.actions' own Row cell) — the natural, unstretched
+        // baseline this package has always rendered at.
+        await tester.pumpWidget(wrap(button));
+        final naturalSize = tester.getSize(
+          find.descendant(
+            of: find.byType(SpringPulldownMenuButton),
+            matching: find.byType(GestureDetector),
+          ),
+        );
+
+        // Tight (AppBar.leading's fixed-width slot, reproduced directly
+        // rather than via a real AppBar) — without UnconstrainedBox at the
+        // button's root, this would force the circle to grow to fill the
+        // whole 56x56 box instead of staying at its natural size.
+        await tester.pumpWidget(
+          wrapTight(
+              const BoxConstraints.tightFor(width: 56, height: 56), button),
+        );
+        final tightlyConstrainedSize = tester.getSize(
+          find.descendant(
+            of: find.byType(SpringPulldownMenuButton),
+            matching: find.byType(GestureDetector),
+          ),
+        );
+
+        expect(tightlyConstrainedSize, naturalSize);
       },
     );
   });

@@ -1,3 +1,27 @@
+## 0.7.1
+
+- **Fix**: `SpringPulldownMenuButton` rendered at a visibly larger size in
+  `AppBar.leading` than in `AppBar.actions` — the leading slot hands its
+  child a *tight* fixed-width box (56pt by default), and nothing in the
+  button's tree resisted that, so its circular decoration stretched to
+  fill it instead of staying at its natural ~38pt size (padding 8 +
+  `iconSize` 22). `AppBar.actions`' `Row` cell is unconstrained in its main
+  axis, so it was never affected — this only showed up once 0.7.0 gave the
+  button a reason to actually be placed in `AppBar.leading`.
+- Fixed by wrapping the button's root in `UnconstrainedBox`: it hands the
+  button's own subtree fully unbounded constraints, then clamps only the
+  *result* into whatever box the button actually has to occupy — so the
+  circle stays at its natural size and gets centered within a tight slot,
+  the same way it would size itself with no ambient constraint at all.
+  (An initial attempt using `Center` instead was reverted — `Center`/`Align`
+  expand to fill any *bounded* incoming constraint, tight or not, which
+  would have made the button balloon to fill `AppBar.actions`' own bounded
+  cross-axis height too, just a different bug in the opposite direction.)
+- The internal anchor/`anchorSize` used to position the floating menu were
+  already read from the button's own inner render object (unaffected by
+  this bug), so this fix does not change any menu geometry — only the
+  button's own visible/tappable circle size.
+
 ## 0.7.0
 
 - **Non-breaking**: added `SpringPulldownMenuHorizontalAnchor` (`auto` |

@@ -628,50 +628,75 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
     final restFillAlpha = isDark ? 0.10 : 0.045;
     final restBorderAlpha = isDark ? 0.16 : 0.09;
 
-    return Semantics(
-      button: true,
-      label: widget.semanticLabel,
-      excludeSemantics: true,
-      onTap: _activateFromSemantics,
-      child: GestureDetector(
-        key: _buttonKey,
-        behavior: HitTestBehavior.opaque,
-        onTapDown: _onTapDown,
-        onTapUp: _onTapUp,
-        onTapCancel: _onTapCancel,
-        child: AnimatedBuilder(
-          animation: Listenable.merge([_scaleController, _highlightController]),
-          builder: (context, child) {
-            // Same deviation-from-rest the scale bounce already tracks: positive
-            // while pressed in (scale < 1, nudges toward the finger), negative
-            // during the release overshoot (scale > 1, rebounds past center the
-            // other way) — one signal driving both the size and the lean, so
-            // they always stay in lockstep instead of two animations drifting
-            // out of sync with each other.
-            final pushT = 1.0 - _scaleController.value;
-            return Transform.translate(
-              offset:
-                  _pressDirection * (pushT * widget.style.buttonLeanDistance),
-              child: Transform.scale(
-                scale: _scaleController.value,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: highlightColor.withValues(
-                      alpha: restFillAlpha + 0.16 * _highlightController.value,
+    // UnconstrainedBox — not Center — absorbs whatever ambient constraints
+    // this button is given, so it always renders at its natural compact
+    // size instead of stretching to fill a bigger box. The two ambient
+    // cases this package is actually placed in behave differently:
+    // AppBar.leading hands it a *tight* box (min == max, e.g. 56pt wide);
+    // AppBar.actions' Row cell hands it a *loose-but-bounded* one (0..56pt
+    // tall). Center fills the incoming max in both cases — fine for the
+    // tight case (nothing can shrink below a tight min anyway), but wrong
+    // for the loose-bounded case, where it would expand height to the full
+    // 56pt instead of the button's natural ~38pt, i.e. exactly the
+    // bounded-but-not-tight shape AppBar.actions' cross axis has. Giving
+    // the child fully unbounded constraints first (what UnconstrainedBox
+    // does) and only then clamping the *result* into whatever box this
+    // widget must itself occupy reproduces the button's natural size in
+    // both the loose and the unbounded case, and still centers it inside a
+    // tight box when one is truly forced (AppBar.leading). _buttonKey
+    // stays on the GestureDetector *inside* this wrapper, not this
+    // widget's own root, so _openMenu's anchor/anchorSize also read the
+    // natural circle's real screen rect, not the outer slot this was
+    // squeezed into.
+    return UnconstrainedBox(
+      child: Semantics(
+        button: true,
+        label: widget.semanticLabel,
+        excludeSemantics: true,
+        onTap: _activateFromSemantics,
+        child: GestureDetector(
+          key: _buttonKey,
+          behavior: HitTestBehavior.opaque,
+          onTapDown: _onTapDown,
+          onTapUp: _onTapUp,
+          onTapCancel: _onTapCancel,
+          child: AnimatedBuilder(
+            animation:
+                Listenable.merge([_scaleController, _highlightController]),
+            builder: (context, child) {
+              // Same deviation-from-rest the scale bounce already tracks: positive
+              // while pressed in (scale < 1, nudges toward the finger), negative
+              // during the release overshoot (scale > 1, rebounds past center the
+              // other way) — one signal driving both the size and the lean, so
+              // they always stay in lockstep instead of two animations drifting
+              // out of sync with each other.
+              final pushT = 1.0 - _scaleController.value;
+              return Transform.translate(
+                offset:
+                    _pressDirection * (pushT * widget.style.buttonLeanDistance),
+                child: Transform.scale(
+                  scale: _scaleController.value,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: highlightColor.withValues(
+                        alpha:
+                            restFillAlpha + 0.16 * _highlightController.value,
+                      ),
+                      border: Border.all(
+                        color:
+                            highlightColor.withValues(alpha: restBorderAlpha),
+                        width: 0.75,
+                      ),
                     ),
-                    border: Border.all(
-                      color: highlightColor.withValues(alpha: restBorderAlpha),
-                      width: 0.75,
-                    ),
+                    child: child,
                   ),
-                  child: child,
                 ),
-              ),
-            );
-          },
-          child: Icon(widget.icon, size: widget.iconSize, color: color),
+              );
+            },
+            child: Icon(widget.icon, size: widget.iconSize, color: color),
+          ),
         ),
       ),
     );
