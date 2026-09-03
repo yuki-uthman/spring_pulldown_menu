@@ -92,6 +92,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
   double _menuBounceScale = _defaults.menuBounceScale;
   late double _buttonDampingRatio = _defaultButtonDampingRatio;
   late double _menuDampingRatio = _defaultMenuDampingRatio;
+  SpringPulldownMenuPlacement _placement = _defaults.placement;
 
   void _reset() {
     setState(() {
@@ -102,6 +103,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       _menuBounceScale = _defaults.menuBounceScale;
       _buttonDampingRatio = _defaultButtonDampingRatio;
       _menuDampingRatio = _defaultMenuDampingRatio;
+      _placement = _defaults.placement;
     });
   }
 
@@ -115,6 +117,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       menuBounceScale: _menuBounceScale,
       buttonDampingRatio: _buttonDampingRatio,
       menuDampingRatio: _menuDampingRatio,
+      placement: _placement,
     );
 
     return Scaffold(
@@ -174,6 +177,47 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             style: TextStyle(height: 1.4),
           ),
           const SizedBox(height: 24),
+          Text(
+            'placement',
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Where the menu appears relative to the button.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<SpringPulldownMenuPlacement>(
+            // This example app (like the package itself) never opts into
+            // `uses-material-design: true`, so SegmentedButton's default
+            // selected-checkmark icon (Icons.check) has no Material icon
+            // font to render from — it shows as a tofu "?" glyph instead of
+            // a checkmark. Caught only by actually running this screen on a
+            // simulator, the same way the missing cupertino_icons dependency
+            // was (see CHANGELOG 0.4.1) — flutter analyze/flutter test don't
+            // render fonts. Disabling the icon avoids the tofu without
+            // pulling in the Material font just for this one control.
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment(
+                value: SpringPulldownMenuPlacement.belowAnchor,
+                label: Text('Below anchor'),
+              ),
+              ButtonSegment(
+                value: SpringPulldownMenuPlacement.overAnchor,
+                label: Text('Over anchor'),
+              ),
+            ],
+            selected: {_placement},
+            onSelectionChanged: (selection) =>
+                setState(() => _placement = selection.first),
+          ),
+          const SizedBox(height: 16),
           _Knob(
             label: 'buttonPressScale',
             subtitle: 'How far the button shrinks on press-in.',

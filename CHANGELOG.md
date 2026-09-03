@@ -1,3 +1,32 @@
+## 0.6.0
+
+- **Non-breaking**: added `SpringPulldownMenuPlacement` (`belowAnchor` |
+  `overAnchor`) and a `SpringPulldownMenuStyle.placement` field controlling
+  where the floating menu appears relative to the button, following the
+  same pattern as `SpringPulldownMenuIconAffinity`/`iconAffinity`. **Default
+  is `belowAnchor`** — the existing v0.1.0 through v0.5.0 layout (hangs
+  below the button, or above it if there's no room, right-edge anchored
+  with an 8px gap) — so existing callers see byte-for-byte identical
+  behavior. Set `overAnchor` to align the menu's top with the button's own
+  top instead, so the menu grows out from behind the button and covers it,
+  matching real iOS pull-down/context menus.
+- With `overAnchor`, the button is genuinely covered while the menu is
+  open — the menu card (opaque, later in the same `Stack`) sits on top of
+  the button's own screen rect, so a tap there hits the menu's content
+  first, not the button underneath. This reuses the existing tap-through
+  "hole" mechanism unchanged rather than special-casing it: the hole exists
+  so a tap on an *uncovered* button falls through the dismiss barrier to
+  the button's own `GestureDetector` (the v0.1.0→v0.2.0 fix for the wrong
+  bounce playing); with `overAnchor` the button is never uncovered while
+  the menu is open, so that fall-through path is simply moot for the
+  covered region — the menu itself already intercepts the tap.
+- The pop-in scale still originates from `Alignment.topRight`, unchanged,
+  for both placements — with `overAnchor`, `right`/`top` resolve to
+  exactly the button's own top-right corner, so the existing alignment
+  already scales from that literal point without needing a different one.
+- `example/`'s Bounce Playground gained a segmented control to try both
+  placements live.
+
 ## 0.5.0
 
 - **Non-breaking**: added `SpringPulldownMenuStyle.buttonDampingRatio` and

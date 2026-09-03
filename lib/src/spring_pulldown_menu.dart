@@ -59,6 +59,21 @@ enum SpringPulldownMenuIconAffinity {
   trailing,
 }
 
+/// Where the floating menu appears relative to the button that spawned it.
+enum SpringPulldownMenuPlacement {
+  /// The menu hangs below the button — or above it, if there isn't room —
+  /// right-edge anchored with a small gap. This package's original v0.1.0
+  /// layout.
+  belowAnchor,
+
+  /// The menu's top aligns with the button's own top, so the button's rect
+  /// sits inside the menu's footprint instead of a gap opening up below
+  /// it — matching real iOS pull-down/context menus (e.g. the Files app's
+  /// "..." toolbar button), which grow out from behind the control that
+  /// spawned them rather than leaving it exposed above a gap.
+  overAnchor,
+}
+
 /// Visual + physics configuration for [SpringPulldownMenuButton] — the same role
 /// [ThemeData]/`CardTheme` play for built-in Material widgets. Override only
 /// the fields you care about via [copyWith]; everything else falls back to
@@ -160,6 +175,13 @@ class SpringPulldownMenuStyle {
   /// [menuPopSpring] the same way.
   final double? menuDampingRatio;
 
+  /// Where the floating menu appears relative to the button. Defaults to
+  /// [SpringPulldownMenuPlacement.belowAnchor] — this package's original
+  /// v0.1.0 layout — so picking this default up costs existing callers
+  /// nothing; set [SpringPulldownMenuPlacement.overAnchor] to match a real
+  /// iOS pull-down that grows out from behind its source button instead.
+  final SpringPulldownMenuPlacement placement;
+
   const SpringPulldownMenuStyle({
     this.buttonSpring = const SpringDescription(
       mass: 1,
@@ -189,6 +211,7 @@ class SpringPulldownMenuStyle {
     this.menuBounceScale = 1.15,
     this.buttonDampingRatio,
     this.menuDampingRatio,
+    this.placement = SpringPulldownMenuPlacement.belowAnchor,
   });
 
   static const defaults = SpringPulldownMenuStyle();
@@ -236,6 +259,7 @@ class SpringPulldownMenuStyle {
     double? menuBounceScale,
     double? buttonDampingRatio,
     double? menuDampingRatio,
+    SpringPulldownMenuPlacement? placement,
   }) {
     return SpringPulldownMenuStyle(
       buttonSpring: buttonSpring ?? this.buttonSpring,
@@ -259,6 +283,7 @@ class SpringPulldownMenuStyle {
       menuBounceScale: menuBounceScale ?? this.menuBounceScale,
       buttonDampingRatio: buttonDampingRatio ?? this.buttonDampingRatio,
       menuDampingRatio: menuDampingRatio ?? this.menuDampingRatio,
+      placement: placement ?? this.placement,
     );
   }
 }
@@ -739,10 +764,22 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
         (screenSize.width - (widget.anchor.dx + widget.anchorSize.width))
             .clamp(12.0, screenSize.width - 12.0);
 
-    double top = widget.anchor.dy + widget.anchorSize.height + 8;
-    if (top + estimatedHeight > screenSize.height - 24) {
-      // Not enough room below the button — open upward instead.
-      top = widget.anchor.dy - estimatedHeight - 8;
+    double top;
+    if (style.placement == SpringPulldownMenuPlacement.overAnchor) {
+      // Grows out from behind the button: the menu's top aligns exactly
+      // with the button's own top, so the button's rect sits inside the
+      // menu's footprint rather than a gap opening up below it. No
+      // flip-to-above-if-no-room logic here — that's specific to the
+      // below/above model, and a button anchored near the top of the
+      // screen (its natural home, e.g. an AppBar) always has room to grow
+      // downward from its own position.
+      top = widget.anchor.dy;
+    } else {
+      top = widget.anchor.dy + widget.anchorSize.height + 8;
+      if (top + estimatedHeight > screenSize.height - 24) {
+        // Not enough room below the button — open upward instead.
+        top = widget.anchor.dy - estimatedHeight - 8;
+      }
     }
 
     // The button lives in the page below this overlay, at the same screen
@@ -756,6 +793,16 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
     // here) lets that tap fall through to the real button underneath, while
     // every other point on screen still dismisses on tap. The visual blur
     // stays a single full-screen, non-interactive layer so there's no seam.
+    //
+    // This same hole computation is reused unchanged for
+    // [SpringPulldownMenuPlacement.overAnchor]: there, the menu card itself
+    // (a later, opaque Positioned sibling below in this Stack — see the
+    // final child) fully covers the hole's screen rect, since its footprint
+    // starts at the button's own top and is at least as wide. A tap there
+    // hits the menu card's own hit-testable content first, never the
+    // barrier beneath it, so whether a dismiss region exists underneath is
+    // moot — the button is genuinely covered and cannot be tapped again
+    // until the menu closes, matching real iOS pull-down behavior.
     final holeLeft = widget.anchor.dx.clamp(0.0, screenSize.width);
     final holeTop = widget.anchor.dy.clamp(0.0, screenSize.height);
     final holeRight = (holeLeft + widget.anchorSize.width).clamp(
@@ -833,7 +880,12 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
                 child: Transform.scale(
                   // Scaling from the corner nearest the button — rather than
                   // the card's center — sells the illusion that the menu is
-                  // growing directly out of the button that spawned it.
+                  // growing directly out of the button that spawned it. This
+                  // holds for both placements: for
+                  // [SpringPulldownMenuPlacement.overAnchor], `right`/`top`
+                  // above resolve to exactly the button's own top-right
+                  // corner, so topRight scales from that literal point
+                  // rather than needing a different alignment.
                   alignment: Alignment.topRight,
                   scale: _controller.value,
                   child: child,

@@ -3,7 +3,7 @@ description: >-
   A springy, iOS/UIKit-style "..." context menu button for Flutter — a
   frosted-glass popup menu with spring pop-in, directional press-lean,
   release bounce, and native-feel dismiss behavior.
-version: 0.5.0
+version: 0.6.0
 homepage: https://github.com/yuki-uthman/spring_pulldown_menu
 repository: https://github.com/yuki-uthman/spring_pulldown_menu
 issue_tracker: https://github.com/yuki-uthman/spring_pulldown_menu/issues

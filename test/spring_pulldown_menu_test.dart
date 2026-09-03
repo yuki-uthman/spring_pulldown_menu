@@ -330,6 +330,81 @@ void main() {
   // real device/simulator, the same way this package's other animation
   // "feel" work has been verified throughout.
 
+  group('placement', () {
+    test('defaults to belowAnchor', () {
+      const style = SpringPulldownMenuStyle();
+      expect(style.placement, SpringPulldownMenuPlacement.belowAnchor);
+    });
+
+    test('copyWith overrides placement without disturbing other fields', () {
+      const style = SpringPulldownMenuStyle();
+      final custom = style.copyWith(
+        placement: SpringPulldownMenuPlacement.overAnchor,
+      );
+
+      expect(custom.placement, SpringPulldownMenuPlacement.overAnchor);
+      expect(custom.enableHaptics, style.enableHaptics);
+    });
+
+    testWidgets(
+      'belowAnchor (default) opens the menu below the button, not covering it',
+      (tester) async {
+        await tester.pumpWidget(
+          wrap(
+            const SpringPulldownMenuButton(
+              actions: [
+                SpringPulldownMenuAction(
+                  label: 'Rename',
+                  icon: CupertinoIcons.pencil,
+                ),
+              ],
+            ),
+          ),
+        );
+
+        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+
+        await tester.tap(find.byType(SpringPulldownMenuButton));
+        await tester.pumpAndSettle();
+
+        final cardTop = tester.getTopLeft(find.byType(ClipRRect).first).dy;
+        // A real gap (the 8px offset in the source), not merely non-negative
+        // — proves the card starts below the button rather than overlapping
+        // it at all.
+        expect(cardTop, greaterThan(buttonRect.bottom));
+      },
+    );
+
+    testWidgets(
+      "overAnchor aligns the menu's top with the button's own top, covering it",
+      (tester) async {
+        await tester.pumpWidget(
+          wrap(
+            const SpringPulldownMenuButton(
+              style: SpringPulldownMenuStyle(
+                placement: SpringPulldownMenuPlacement.overAnchor,
+              ),
+              actions: [
+                SpringPulldownMenuAction(
+                  label: 'Rename',
+                  icon: CupertinoIcons.pencil,
+                ),
+              ],
+            ),
+          ),
+        );
+
+        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+
+        await tester.tap(find.byType(SpringPulldownMenuButton));
+        await tester.pumpAndSettle();
+
+        final cardTop = tester.getTopLeft(find.byType(ClipRRect).first).dy;
+        expect(cardTop, closeTo(buttonRect.top, 0.5));
+      },
+    );
+  });
+
   group('damping ratio', () {
     test(
         'effectiveButtonSpring equals buttonSpring when ratio is null (default)',

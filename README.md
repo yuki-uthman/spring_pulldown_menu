@@ -44,6 +44,10 @@ No dependencies beyond the Flutter SDK.
   independent of the peak scale above
 - An imperative `SpringPulldownMenuController` for opening/closing the menu from
   outside the button (e.g. a keyboard shortcut, another gesture)
+- Configurable popup placement (`SpringPulldownMenuStyle.placement`) —
+  `belowAnchor` by default, matching v0.1.0 through v0.5.0; `overAnchor` to
+  grow the menu out from behind the button, covering it, matching real iOS
+  pull-downs
 
 ## Usage
 
@@ -167,6 +171,18 @@ past 1.0 more than once); below `1.0` it oscillates, more times the closer
 to `0`; above `1.0` it settles slowly, also without oscillating. Leaving it
 `null` (the default) keeps whichever `buttonSpring`/`menuPopSpring` you
 already have exactly as given.
+
+Covering placement — the menu grows out from behind the button instead of
+leaving a gap below it, matching real iOS pull-downs:
+
+```dart
+SpringPulldownMenuButton(
+  style: SpringPulldownMenuStyle.defaults.copyWith(
+    placement: SpringPulldownMenuPlacement.overAnchor,
+  ),
+  actions: [...],
+)
+```
 
 See `example/` for a full runnable app — a "Bounce Playground" with a live
 slider for each of the fields above (plus a light/dark mode toggle), so you
