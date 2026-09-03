@@ -8,7 +8,7 @@
 
 ```yaml
 dependencies:
-  spring_pulldown_menu: ^0.6.0
+  spring_pulldown_menu: ^0.7.0
 ```
 
 ```dart
@@ -22,7 +22,7 @@ import 'package:spring_pulldown_menu/spring_pulldown_menu.dart';
   (its natural home, top-right, matching native iOS placement) or anywhere else.
 - `SpringPulldownMenuAction({ label, icon, onTap, isDestructive })` — one menu row.
   Set `isDestructive: true` for actions like "Delete" (renders in `SpringPulldownMenuStyle.destructiveColor`).
-- `SpringPulldownMenuStyle({ buttonSpring, menuPopSpring, closeDuration, closeCurve, menuWidth, cornerRadius, blurSigma, lightFillColor, darkFillColor, destructiveColor, enableHaptics, iconAffinity, labelTextStyle, buttonPressScale, buttonBounceScale, buttonImpactBounceIntensity, buttonLeanDistance, menuBounceScale, buttonDampingRatio, menuDampingRatio, placement })`
+- `SpringPulldownMenuStyle({ buttonSpring, menuPopSpring, closeDuration, closeCurve, menuWidth, cornerRadius, blurSigma, lightFillColor, darkFillColor, destructiveColor, enableHaptics, iconAffinity, labelTextStyle, buttonPressScale, buttonBounceScale, buttonImpactBounceIntensity, buttonLeanDistance, menuBounceScale, buttonDampingRatio, menuDampingRatio, placement, horizontalAnchor })`
   — visual/physics tuning. Use `SpringPulldownMenuStyle.defaults.copyWith(...)` to
   override only what you need. `labelTextStyle` is merged (via `TextStyle.merge`)
   onto the built-in default, not a plain replacement — an override that only
@@ -46,6 +46,13 @@ import 'package:spring_pulldown_menu/spring_pulldown_menu.dart';
   below the button, or above it if there's no room, right-edge anchored).
   `overAnchor` aligns the menu's top with the button's own top so the menu
   grows out from behind it, covering it — matching real iOS pull-downs.
+- `SpringPulldownMenuHorizontalAnchor` (`auto` | `left` | `right`) — which
+  horizontal direction the menu grows from the button, orthogonal to
+  `SpringPulldownMenuPlacement`. Default `right` (v0.1.0 layout: right-edge
+  anchored, grows leftward). `auto` resolves the direction from the button's
+  actual screen position (right-aligns past the horizontal midpoint,
+  left-aligns before it), clamped to stay on-screen either way. `left`
+  forces left-edge anchoring regardless of position (e.g. `AppBar.leading`).
 - `SpringPulldownMenuController()` — optional imperative handle: `.open()`, `.close()`,
   `.toggle()`, `.isOpen`. Pass it to `SpringPulldownMenuButton.controller` if you
   need to drive the menu from outside the button itself.
@@ -107,6 +114,12 @@ SpringPulldownMenuButton(
   With `overAnchor`, the button is genuinely covered while the menu is open
   (tapping that region hits the menu, not the button) — this is intentional,
   matching real iOS, not a bug to work around.
+- Growth direction is already exposed via
+  `SpringPulldownMenuStyle.horizontalAnchor` — don't hand-roll left/right
+  positioning logic for a button that isn't top-right; set
+  `SpringPulldownMenuHorizontalAnchor.auto` (or `.left` for an explicit
+  override) instead. It composes with `placement`/`overAnchor` unchanged —
+  they're independent axes.
 
 ## Known limitation
 

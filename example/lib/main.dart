@@ -93,6 +93,8 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
   late double _buttonDampingRatio = _defaultButtonDampingRatio;
   late double _menuDampingRatio = _defaultMenuDampingRatio;
   SpringPulldownMenuPlacement _placement = _defaults.placement;
+  SpringPulldownMenuHorizontalAnchor _horizontalAnchor =
+      _defaults.horizontalAnchor;
 
   void _reset() {
     setState(() {
@@ -104,6 +106,7 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       _buttonDampingRatio = _defaultButtonDampingRatio;
       _menuDampingRatio = _defaultMenuDampingRatio;
       _placement = _defaults.placement;
+      _horizontalAnchor = _defaults.horizontalAnchor;
     });
   }
 
@@ -118,10 +121,43 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
       buttonDampingRatio: _buttonDampingRatio,
       menuDampingRatio: _menuDampingRatio,
       placement: _placement,
+      horizontalAnchor: _horizontalAnchor,
     );
 
     return Scaffold(
       appBar: AppBar(
+        // A second "..." button here, alongside the existing trailing one,
+        // lets horizontalAnchor's left/right/auto resolution be checked
+        // live from both corners without recompiling — a leading button is
+        // exactly the case this field exists for (see the horizontalAnchor
+        // control below).
+        leading: SpringPulldownMenuButton(
+          style: style,
+          semanticLabel: 'More options (leading)',
+          actions: [
+            SpringPulldownMenuAction(
+              label: 'Mark all complete',
+              icon: CupertinoIcons.checkmark_alt,
+              onTap: () {},
+            ),
+            SpringPulldownMenuAction(
+              label: 'Reminders',
+              icon: CupertinoIcons.bell,
+              onTap: () {},
+            ),
+            SpringPulldownMenuAction(
+              label: 'Edit list',
+              icon: CupertinoIcons.pencil,
+              onTap: () {},
+            ),
+            SpringPulldownMenuAction(
+              label: 'Delete',
+              icon: CupertinoIcons.trash,
+              isDestructive: true,
+              onTap: () {},
+            ),
+          ],
+        ),
         title: const Text('Bounce Playground'),
         actions: [
           if (widget.onToggleTheme != null)
@@ -216,6 +252,44 @@ class _PlaygroundScreenState extends State<PlaygroundScreen> {
             selected: {_placement},
             onSelectionChanged: (selection) =>
                 setState(() => _placement = selection.first),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'horizontalAnchor',
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Which way the menu grows from the button. Try this with both '
+            'the leading (top-left) and trailing (top-right) "..." buttons '
+            'above.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<SpringPulldownMenuHorizontalAnchor>(
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment(
+                value: SpringPulldownMenuHorizontalAnchor.auto,
+                label: Text('Auto'),
+              ),
+              ButtonSegment(
+                value: SpringPulldownMenuHorizontalAnchor.left,
+                label: Text('Left'),
+              ),
+              ButtonSegment(
+                value: SpringPulldownMenuHorizontalAnchor.right,
+                label: Text('Right'),
+              ),
+            ],
+            selected: {_horizontalAnchor},
+            onSelectionChanged: (selection) =>
+                setState(() => _horizontalAnchor = selection.first),
           ),
           const SizedBox(height: 16),
           _Knob(

@@ -48,6 +48,12 @@ No dependencies beyond the Flutter SDK.
   `belowAnchor` by default, matching v0.1.0 through v0.5.0; `overAnchor` to
   grow the menu out from behind the button, covering it, matching real iOS
   pull-downs
+- Configurable horizontal growth direction
+  (`SpringPulldownMenuStyle.horizontalAnchor`) — `right` by default, matching
+  v0.1.0 through v0.6.0 (right-edge anchored, grows leftward); `left` to
+  left-anchor instead (e.g. for an `AppBar.leading` button); `auto` to pick
+  the direction from the button's actual screen position, the way real iOS
+  `UIMenu`/context menus do
 
 ## Usage
 
@@ -181,6 +187,21 @@ SpringPulldownMenuButton(
     placement: SpringPulldownMenuPlacement.overAnchor,
   ),
   actions: [...],
+)
+```
+
+A button that isn't in its usual top-right spot (e.g. `AppBar.leading`) —
+`auto` picks left/right from the button's actual screen position; `left`
+forces it regardless of position:
+
+```dart
+AppBar(
+  leading: SpringPulldownMenuButton(
+    style: SpringPulldownMenuStyle.defaults.copyWith(
+      horizontalAnchor: SpringPulldownMenuHorizontalAnchor.auto,
+    ),
+    actions: [...],
+  ),
 )
 ```
 

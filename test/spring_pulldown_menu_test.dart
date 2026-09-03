@@ -405,6 +405,195 @@ void main() {
     );
   });
 
+  group('horizontalAnchor', () {
+    // A Stack + Positioned wrapper (rather than wrap()'s AppBar.actions,
+    // which always places the button top-right) lets these tests put the
+    // button at an arbitrary screen x — near the left edge, near the right
+    // edge, or anywhere between — to exercise auto's own resolution rule.
+    Widget wrapAt(double left, Widget child) {
+      return MaterialApp(
+        home: Scaffold(
+          body: Stack(children: [Positioned(left: left, top: 40, child: child)]),
+        ),
+      );
+    }
+
+    test('defaults to right (reproduces v0.1.0-v0.6.0 behavior)', () {
+      const style = SpringPulldownMenuStyle();
+      expect(style.horizontalAnchor, SpringPulldownMenuHorizontalAnchor.right);
+    });
+
+    test('copyWith overrides horizontalAnchor without disturbing other fields', () {
+      const style = SpringPulldownMenuStyle();
+      final custom = style.copyWith(
+        horizontalAnchor: SpringPulldownMenuHorizontalAnchor.left,
+      );
+
+      expect(custom.horizontalAnchor, SpringPulldownMenuHorizontalAnchor.left);
+      expect(custom.placement, style.placement);
+    });
+
+    testWidgets(
+      'auto resolves to left-anchored for a button near the left edge',
+      (tester) async {
+        await tester.pumpWidget(
+          wrapAt(
+            20,
+            const SpringPulldownMenuButton(
+              style: SpringPulldownMenuStyle(
+                horizontalAnchor: SpringPulldownMenuHorizontalAnchor.auto,
+              ),
+              actions: [
+                SpringPulldownMenuAction(
+                  label: 'Rename',
+                  icon: CupertinoIcons.pencil,
+                ),
+              ],
+            ),
+          ),
+        );
+
+        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+
+        await tester.tap(find.byType(SpringPulldownMenuButton));
+        await tester.pumpAndSettle();
+
+        // Left-anchored: the card's left edge sits at the button's own left
+        // edge, growing rightward from there.
+        final cardLeft = tester.getTopLeft(find.byType(ClipRRect).first).dx;
+        expect(cardLeft, closeTo(buttonRect.left, 0.5));
+      },
+    );
+
+    testWidgets(
+      "auto resolves to right-anchored for a button near the right edge (today's behavior)",
+      (tester) async {
+        final screenSize = tester.view.physicalSize / tester.view.devicePixelRatio;
+
+        await tester.pumpWidget(
+          wrapAt(
+            screenSize.width - 60,
+            const SpringPulldownMenuButton(
+              style: SpringPulldownMenuStyle(
+                horizontalAnchor: SpringPulldownMenuHorizontalAnchor.auto,
+              ),
+              actions: [
+                SpringPulldownMenuAction(
+                  label: 'Rename',
+                  icon: CupertinoIcons.pencil,
+                ),
+              ],
+            ),
+          ),
+        );
+
+        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+
+        await tester.tap(find.byType(SpringPulldownMenuButton));
+        await tester.pumpAndSettle();
+
+        // Right-anchored: the card's right edge sits at the button's own
+        // right edge, growing leftward from there.
+        final cardRight = tester.getRect(find.byType(ClipRRect).first).right;
+        expect(cardRight, closeTo(buttonRect.right, 0.5));
+      },
+    );
+
+    testWidgets(
+      'explicit left forces left-anchoring regardless of screen position',
+      (tester) async {
+        final screenSize = tester.view.physicalSize / tester.view.devicePixelRatio;
+
+        await tester.pumpWidget(
+          wrapAt(
+            screenSize.width - 60,
+            const SpringPulldownMenuButton(
+              style: SpringPulldownMenuStyle(
+                horizontalAnchor: SpringPulldownMenuHorizontalAnchor.left,
+              ),
+              actions: [
+                SpringPulldownMenuAction(
+                  label: 'Rename',
+                  icon: CupertinoIcons.pencil,
+                ),
+              ],
+            ),
+          ),
+        );
+
+        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+
+        await tester.tap(find.byType(SpringPulldownMenuButton));
+        await tester.pumpAndSettle();
+
+        final cardLeft = tester.getTopLeft(find.byType(ClipRRect).first).dx;
+        expect(cardLeft, closeTo(buttonRect.left, 0.5));
+      },
+    );
+
+    testWidgets(
+      'explicit right forces right-anchoring regardless of screen position',
+      (tester) async {
+        await tester.pumpWidget(
+          wrapAt(
+            20,
+            const SpringPulldownMenuButton(
+              style: SpringPulldownMenuStyle(
+                horizontalAnchor: SpringPulldownMenuHorizontalAnchor.right,
+              ),
+              actions: [
+                SpringPulldownMenuAction(
+                  label: 'Rename',
+                  icon: CupertinoIcons.pencil,
+                ),
+              ],
+            ),
+          ),
+        );
+
+        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+
+        await tester.tap(find.byType(SpringPulldownMenuButton));
+        await tester.pumpAndSettle();
+
+        final cardRight = tester.getRect(find.byType(ClipRRect).first).right;
+        expect(cardRight, closeTo(buttonRect.right, 0.5));
+      },
+    );
+
+    testWidgets(
+      'left-anchoring composes with overAnchor: both edges align with the button',
+      (tester) async {
+        await tester.pumpWidget(
+          wrapAt(
+            20,
+            const SpringPulldownMenuButton(
+              style: SpringPulldownMenuStyle(
+                horizontalAnchor: SpringPulldownMenuHorizontalAnchor.left,
+                placement: SpringPulldownMenuPlacement.overAnchor,
+              ),
+              actions: [
+                SpringPulldownMenuAction(
+                  label: 'Rename',
+                  icon: CupertinoIcons.pencil,
+                ),
+              ],
+            ),
+          ),
+        );
+
+        final buttonRect = tester.getRect(find.byType(SpringPulldownMenuButton));
+
+        await tester.tap(find.byType(SpringPulldownMenuButton));
+        await tester.pumpAndSettle();
+
+        final cardTopLeft = tester.getTopLeft(find.byType(ClipRRect).first);
+        expect(cardTopLeft.dx, closeTo(buttonRect.left, 0.5));
+        expect(cardTopLeft.dy, closeTo(buttonRect.top, 0.5));
+      },
+    );
+  });
+
   group('damping ratio', () {
     test(
         'effectiveButtonSpring equals buttonSpring when ratio is null (default)',

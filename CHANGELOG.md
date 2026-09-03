@@ -1,3 +1,42 @@
+## 0.7.0
+
+- **Non-breaking**: added `SpringPulldownMenuHorizontalAnchor` (`auto` |
+  `left` | `right`) and a `SpringPulldownMenuStyle.horizontalAnchor` field
+  controlling which horizontal direction the floating menu grows from the
+  button — orthogonal to (and composable with) `SpringPulldownMenuPlacement`,
+  which only controls the vertical axis. Follows the same pattern as
+  `SpringPulldownMenuPlacement`/`placement`. **Default is `right`** — the
+  existing v0.1.0 through v0.6.0 layout (right-edge anchored to the button,
+  growing leftward) — so existing callers see byte-for-byte identical
+  behavior, regardless of where their button actually sits on screen.
+- Before this release the horizontal position was hardcoded to always
+  right-edge-align, which is correct for this package's one built-and-tested
+  case (a top-right "..." button in `AppBar.actions`) but breaks down for a
+  leading/left-edge button (e.g. `AppBar.leading`) or an inline/mid-screen
+  one — the menu kept right-aligning and bulging further off the left edge
+  of the screen instead of growing naturally toward the open side. `auto`
+  fixes this the way real iOS `UIMenu`/context menus do: it resolves the
+  growth direction from the button's actual screen position (right-anchors
+  past the horizontal midpoint, left-anchors before it), clamped to stay
+  fully on-screen either way. `left` forces left-edge anchoring regardless
+  of position, for a caller that always wants one specific side.
+- `overAnchor`'s pop-in `Transform.scale` alignment, previously hardcoded to
+  `Alignment.topRight` (see the 0.6.0 entry below for why that coincided
+  with the button's own corner), is now derived from the resolved
+  horizontal anchor — `Alignment.topLeft` when left-anchored, `topRight`
+  when right-anchored — so the "grows out from behind the button" illusion
+  holds for either horizontal direction, not just the original right-only
+  case.
+- The tap-through "hole" mechanism (see the 0.6.0 entry) needed no changes:
+  it's computed from the button's own rect regardless of which way the menu
+  grows, and for `overAnchor` the menu card still fully covers that rect
+  from either horizontal anchor, since its footprint still originates at
+  the button's exact position.
+- `example/`'s Bounce Playground gained a second "..." button at
+  `AppBar.leading` (alongside the existing trailing one) and a segmented
+  control for `horizontalAnchor`, so both directions — and both button
+  positions — are checkable live without recompiling.
+
 ## 0.6.0
 
 - **Non-breaking**: added `SpringPulldownMenuPlacement` (`belowAnchor` |

@@ -74,6 +74,28 @@ enum SpringPulldownMenuPlacement {
   overAnchor,
 }
 
+/// Which horizontal direction the floating menu grows from the button that
+/// spawned it — orthogonal to (and composable with) [SpringPulldownMenuPlacement],
+/// which controls the vertical axis instead.
+enum SpringPulldownMenuHorizontalAnchor {
+  /// Resolve the growth direction from the button's actual screen position,
+  /// the way real iOS `UIMenu`/context menus do: if the button's center
+  /// sits past the horizontal midpoint of the screen, right-align the menu
+  /// to it (grow leftward); otherwise left-align it (grow rightward).
+  /// Either way the menu is clamped to stay fully on-screen.
+  auto,
+
+  /// Left-edge aligned to the button, growing rightward — for a button
+  /// near the left edge of the screen (e.g. `AppBar.leading`).
+  left,
+
+  /// Right-edge aligned to the button, growing leftward. This package's
+  /// original v0.1.0 layout — the only case ever built and tested against
+  /// (a top-right "..." button in `AppBar.actions`) — and this field's
+  /// default, so existing callers see byte-for-byte identical behavior.
+  right,
+}
+
 /// Visual + physics configuration for [SpringPulldownMenuButton] — the same role
 /// [ThemeData]/`CardTheme` play for built-in Material widgets. Override only
 /// the fields you care about via [copyWith]; everything else falls back to
@@ -182,6 +204,16 @@ class SpringPulldownMenuStyle {
   /// iOS pull-down that grows out from behind its source button instead.
   final SpringPulldownMenuPlacement placement;
 
+  /// Which horizontal direction the floating menu grows from the button.
+  /// Defaults to [SpringPulldownMenuHorizontalAnchor.right] — this
+  /// package's original v0.1.0 layout — so picking this default up costs
+  /// existing callers nothing; set
+  /// [SpringPulldownMenuHorizontalAnchor.auto] to have the menu pick its
+  /// own growth direction from the button's screen position instead (or
+  /// [SpringPulldownMenuHorizontalAnchor.left] to force left-anchoring
+  /// regardless of position, e.g. for an `AppBar.leading` button).
+  final SpringPulldownMenuHorizontalAnchor horizontalAnchor;
+
   const SpringPulldownMenuStyle({
     this.buttonSpring = const SpringDescription(
       mass: 1,
@@ -212,6 +244,7 @@ class SpringPulldownMenuStyle {
     this.buttonDampingRatio,
     this.menuDampingRatio,
     this.placement = SpringPulldownMenuPlacement.belowAnchor,
+    this.horizontalAnchor = SpringPulldownMenuHorizontalAnchor.right,
   });
 
   static const defaults = SpringPulldownMenuStyle();
@@ -260,6 +293,7 @@ class SpringPulldownMenuStyle {
     double? buttonDampingRatio,
     double? menuDampingRatio,
     SpringPulldownMenuPlacement? placement,
+    SpringPulldownMenuHorizontalAnchor? horizontalAnchor,
   }) {
     return SpringPulldownMenuStyle(
       buttonSpring: buttonSpring ?? this.buttonSpring,
@@ -284,6 +318,7 @@ class SpringPulldownMenuStyle {
       buttonDampingRatio: buttonDampingRatio ?? this.buttonDampingRatio,
       menuDampingRatio: menuDampingRatio ?? this.menuDampingRatio,
       placement: placement ?? this.placement,
+      horizontalAnchor: horizontalAnchor ?? this.horizontalAnchor,
     );
   }
 }
@@ -746,22 +781,58 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
     widget.onRemoved();
   }
 
+  /// Resolves [SpringPulldownMenuHorizontalAnchor] to a simple bool: true
+  /// means left-edge anchored (menu grows rightward), false means
+  /// right-edge anchored (menu grows leftward — this package's original
+  /// behavior). Kept as one pure function, independent of the vertical
+  /// (placement) computation in [build], so the two axes compose without
+  /// either one needing to know about the other.
+  static bool _resolveLeftAnchored(
+    SpringPulldownMenuHorizontalAnchor anchor,
+    Offset anchorOffset,
+    Size anchorSize,
+    Size screenSize,
+  ) {
+    switch (anchor) {
+      case SpringPulldownMenuHorizontalAnchor.left:
+        return true;
+      case SpringPulldownMenuHorizontalAnchor.right:
+        return false;
+      case SpringPulldownMenuHorizontalAnchor.auto:
+        final anchorCenterX = anchorOffset.dx + anchorSize.width / 2;
+        return anchorCenterX <= screenSize.width / 2;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final style = widget.style;
 
-    // Anchor the card so it hangs below the button, right-edge aligned with
-    // it (matching where a native iOS pull-down menu opens from a top-right
-    // "..." button), clamped to stay fully on-screen. Positioned from the
-    // *right* — not a computed left offset — so this holds regardless of
-    // the card's actual (shrink-to-fit) width: right-edge alignment doesn't
-    // need to know that width up front the way left-edge placement would.
+    // Anchor the card so it hangs below the button (matching where a native
+    // iOS pull-down menu opens), clamped to stay fully on-screen. Which
+    // horizontal edge it's anchored to — and therefore which way it grows —
+    // is resolved from style.horizontalAnchor: right-edge alignment (the
+    // default, and this package's original v0.1.0 behavior) needs only the
+    // *right* offset, not a computed left one, so it holds regardless of the
+    // card's actual (shrink-to-fit) width; left-edge alignment is the
+    // mirror image, positioned from a computed *left* offset instead.
     final estimatedHeight = widget.actions.length * 48.0 + 16;
 
-    final right =
-        (screenSize.width - (widget.anchor.dx + widget.anchorSize.width))
+    final isLeftAnchored = _resolveLeftAnchored(
+      style.horizontalAnchor,
+      widget.anchor,
+      widget.anchorSize,
+      screenSize,
+    );
+
+    final double? left = isLeftAnchored
+        ? widget.anchor.dx.clamp(12.0, screenSize.width - 12.0)
+        : null;
+    final double? right = isLeftAnchored
+        ? null
+        : (screenSize.width - (widget.anchor.dx + widget.anchorSize.width))
             .clamp(12.0, screenSize.width - 12.0);
 
     double top;
@@ -870,6 +941,7 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
           child: dismissRegion(),
         ),
         Positioned(
+          left: left,
           right: right,
           top: top,
           child: AnimatedBuilder(
@@ -881,12 +953,14 @@ class _SpringMenuOverlayState extends State<_SpringMenuOverlay>
                   // Scaling from the corner nearest the button — rather than
                   // the card's center — sells the illusion that the menu is
                   // growing directly out of the button that spawned it. This
-                  // holds for both placements: for
-                  // [SpringPulldownMenuPlacement.overAnchor], `right`/`top`
-                  // above resolve to exactly the button's own top-right
-                  // corner, so topRight scales from that literal point
-                  // rather than needing a different alignment.
-                  alignment: Alignment.topRight,
+                  // holds for both placements and either horizontal anchor:
+                  // for [SpringPulldownMenuPlacement.overAnchor], `top`
+                  // above resolves to exactly the button's own top edge, and
+                  // `left`/`right` (whichever is resolved) resolves to the
+                  // button's own left/right edge, so topLeft/topRight scales
+                  // from that literal corner either way.
+                  alignment:
+                      isLeftAnchored ? Alignment.topLeft : Alignment.topRight,
                   scale: _controller.value,
                   child: child,
                 ),
