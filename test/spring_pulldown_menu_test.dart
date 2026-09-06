@@ -731,4 +731,51 @@ void main() {
       );
     });
   });
+
+  group('showButtonChrome', () {
+    BoxDecoration buttonDecoration(WidgetTester tester) {
+      final container = tester.widget<Container>(
+        find.descendant(
+          of: find.byType(SpringPulldownMenuButton),
+          matching: find.byType(Container),
+        ),
+      );
+      return container.decoration! as BoxDecoration;
+    }
+
+    testWidgets('draws the rest disc by default', (tester) async {
+      await tester.pumpWidget(
+        wrap(const SpringPulldownMenuButton(actions: [])),
+      );
+      final decoration = buttonDecoration(tester);
+      expect(decoration.color!.a, greaterThan(0));
+      expect(decoration.border!.top.color.a, greaterThan(0));
+    });
+
+    testWidgets('false paints nothing at rest but still opens the menu', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        wrap(
+          SpringPulldownMenuButton(
+            style: const SpringPulldownMenuStyle(showButtonChrome: false),
+            actions: [
+              SpringPulldownMenuAction(
+                label: 'Rename',
+                icon: CupertinoIcons.pencil,
+                onTap: () {},
+              ),
+            ],
+          ),
+        ),
+      );
+      final decoration = buttonDecoration(tester);
+      expect(decoration.color!.a, 0);
+      expect(decoration.border!.top.color.a, 0);
+
+      await tester.tap(find.byType(SpringPulldownMenuButton));
+      await tester.pumpAndSettle();
+      expect(find.text('Rename'), findsOneWidget);
+    });
+  });
 }

@@ -1,3 +1,16 @@
+## 0.7.2
+
+- **Non-breaking**: added `SpringPulldownMenuStyle.showButtonChrome`
+  (`bool`, default `true`). Set `false` for a bare glyph with no rest
+  disc — no tinted fill, no hairline border — so the button reads as ink
+  on the bar rather than a coin sitting on it, for apps whose other bar
+  controls (a back arrow, a title) are flat. The default keeps the
+  original v0.1.0 circular look, so existing callers see no change.
+- With the chrome off the same `Container` still lays out with its 8pt
+  padding: the hit area, the button's natural size, and the floating
+  menu's anchor rect are all unchanged. Only the paint goes. The press
+  highlight still flashes on tap-down so the control keeps its feedback.
+
 ## 0.7.1
 
 - **Fix**: `SpringPulldownMenuButton` rendered at a visibly larger size in

@@ -214,6 +214,15 @@ class SpringPulldownMenuStyle {
   /// regardless of position, e.g. for an `AppBar.leading` button).
   final SpringPulldownMenuHorizontalAnchor horizontalAnchor;
 
+  /// Whether the button draws its faint tinted circle (fill + hairline
+  /// border) at rest — the way real iOS circular toolbar buttons (Files,
+  /// Reminders) do. Defaults to true, this package's original v0.1.0 look,
+  /// so picking this default up costs existing callers nothing. Set false
+  /// for a bare glyph that reads as ink on the bar rather than a disc on it;
+  /// the press highlight still flashes so a tap keeps its feedback, and the
+  /// hit area is unchanged (the padding stays, only the paint goes).
+  final bool showButtonChrome;
+
   const SpringPulldownMenuStyle({
     this.buttonSpring = const SpringDescription(
       mass: 1,
@@ -245,6 +254,7 @@ class SpringPulldownMenuStyle {
     this.menuDampingRatio,
     this.placement = SpringPulldownMenuPlacement.belowAnchor,
     this.horizontalAnchor = SpringPulldownMenuHorizontalAnchor.right,
+    this.showButtonChrome = true,
   });
 
   static const defaults = SpringPulldownMenuStyle();
@@ -294,6 +304,7 @@ class SpringPulldownMenuStyle {
     double? menuDampingRatio,
     SpringPulldownMenuPlacement? placement,
     SpringPulldownMenuHorizontalAnchor? horizontalAnchor,
+    bool? showButtonChrome,
   }) {
     return SpringPulldownMenuStyle(
       buttonSpring: buttonSpring ?? this.buttonSpring,
@@ -319,6 +330,7 @@ class SpringPulldownMenuStyle {
       menuDampingRatio: menuDampingRatio ?? this.menuDampingRatio,
       placement: placement ?? this.placement,
       horizontalAnchor: horizontalAnchor ?? this.horizontalAnchor,
+      showButtonChrome: showButtonChrome ?? this.showButtonChrome,
     );
   }
 }
@@ -625,8 +637,12 @@ class _SpringPulldownMenuButtonState extends State<SpringPulldownMenuButton>
     // outlined with a hairline border — not bare, borderless dots. Both use
     // the same base hue as the press highlight, so the two alphas can just
     // add on top of each other.
-    final restFillAlpha = isDark ? 0.10 : 0.045;
-    final restBorderAlpha = isDark ? 0.16 : 0.09;
+    // With showButtonChrome off both rest alphas are zero: the same Container
+    // still lays out (so the hit area and the menu anchor do not move) but
+    // paints nothing until the press highlight lifts the fill.
+    final chrome = widget.style.showButtonChrome;
+    final restFillAlpha = !chrome ? 0.0 : (isDark ? 0.10 : 0.045);
+    final restBorderAlpha = !chrome ? 0.0 : (isDark ? 0.16 : 0.09);
 
     // UnconstrainedBox — not Center — absorbs whatever ambient constraints
     // this button is given, so it always renders at its natural compact
